@@ -1,4 +1,4 @@
-declare const canvas: HTMLCanvasElement;
-declare const ctx: CanvasRenderingContext2D | null;
-declare let curID: number | undefined;
+declare function LoadJsMap(): Promise<string[]>;
+declare function LoadJscript(path: string): Promise<void>;
+declare function LoadScript(): Promise<void>;
 //# sourceMappingURL=index.d.ts.map
