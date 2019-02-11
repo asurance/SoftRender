@@ -1,6 +1,6 @@
 declare class MainView {
-    private ctx;
     private renderID;
+    private gl;
     constructor(ctx: CanvasRenderingContext2D);
     render(): void;
 }

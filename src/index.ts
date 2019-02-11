@@ -7,7 +7,6 @@ function LoadJsMap() {
         function xhrLoaded() {
             xhr.removeEventListener('load', xhrLoaded);
             const jsmap: string[] = JSON.parse(xhr.response);
-            console.log(JSON.stringify(jsmap));
             resolve(jsmap);
         }
     })
@@ -16,7 +15,6 @@ function LoadJscript(path: string) {
     return new Promise<void>((resove, reject) => {
         const node = document.createElement('script');
         node.src = path;
-        console.log(path);
         node.addEventListener('load', nodeLoaded);
         document.body.appendChild(node);
         function nodeLoaded() {
@@ -27,7 +25,6 @@ function LoadJscript(path: string) {
             else {
                 node.parentNode.removeChild(node);
             }
-            console.log(`${path} load success`);
             resove();
         }
     })
