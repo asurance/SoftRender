@@ -14,6 +14,7 @@ var GL;
             this.clearColorA = 0;
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
+            this.renderFrameBuffer = new GL.GLRenderBuffer(context);
         }
         /**Viewing and clipping */
         viewport(x, y, width, height) {
@@ -50,7 +51,7 @@ var GL;
                     throw Error("INVALID_ENUM");
             }
         }
-        /**bindBuffer */
+        /**Buffers */
         bindBuffer(target, buffer) {
             if (buffer == null) {
                 if (target == 34962 /* ARRAY_BUFFER */) {
@@ -104,16 +105,29 @@ var GL;
         deleteBuffer(buffer) {
             buffer.Dispose();
         }
+        /**Renderbuffers */
+        createRenderbuffer() {
+            return new GL.GLRenderBuffer();
+        }
         /**Drawing buffers */
         clear(mask) {
             if (mask & (~(16384 /* COLOR_BUFFER_BIT */ | 256 /* DEPTH_BUFFER_BIT */ | 1024 /* STENCIL_BUFFER_BIT */))) {
                 throw Error("INVALID_ENUM");
             }
             if (mask & 16384 /* COLOR_BUFFER_BIT */) {
-                let color = (this.clearColorR * 255 << 16) + (this.clearColorG * 255 << 8) + (this.clearColorB * 255 << 0);
-                this.context.fillStyle = `#${color.toString(16)}`;
-                this.context.globalAlpha = this.clearColorA;
-                this.context.fillRect(this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight);
+                // let color = (this.clearColorR * 255 << 16) + (this.clearColorG * 255 << 8) + (this.clearColorB * 255 << 0);
+                let buffer = this.renderFrameBuffer.buffer;
+                for (let i = 0; i < buffer.height; i++) {
+                    for (let j = 0; j < buffer.width; j++) {
+                        buffer.data[(i * buffer.width + j) * 4] = this.clearColorR * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColorG * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColorB * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColorA * 255 | 0;
+                    }
+                }
+                // this.context.fillStyle = `#${color.toString(16)}`;
+                // this.context.globalAlpha = this.clearColorA;
+                // this.context.fillRect(this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight);
             }
             if (mask & 256 /* DEPTH_BUFFER_BIT */) {
                 throw Error("NOT_IMPLEMENT");

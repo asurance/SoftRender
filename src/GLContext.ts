@@ -11,6 +11,7 @@ namespace GL {
         private clearColorA: number;
         private arrayBuffer: GLBuffer | null;
         private elementArrayBuffer: GLBuffer | null;
+        private renderFrameBuffer: GLRenderBuffer;
         constructor(context: CanvasRenderingContext2D) {
             this.context = context;
             this.viewportX = 0;
@@ -23,6 +24,7 @@ namespace GL {
             this.clearColorA = 0;
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
+            this.renderFrameBuffer = new GLRenderBuffer(context);
         }
         /**Viewing and clipping */
         viewport(x: number, y: number, width: number, height: number) {
@@ -59,7 +61,7 @@ namespace GL {
                     throw Error("INVALID_ENUM");
             }
         }
-        /**bindBuffer */
+        /**Buffers */
         bindBuffer(target: GLConstants.ARRAY_BUFFER | GLConstants.ELEMENT_ARRAY_BUFFER, buffer: GLBuffer | null) {
             if (buffer == null) {
                 if (target == GLConstants.ARRAY_BUFFER) {
@@ -113,16 +115,25 @@ namespace GL {
         deleteBuffer(buffer: GLBuffer) {
             buffer.Dispose();
         }
+        /**Renderbuffers */
+        createRenderbuffer() {
+            return new GLRenderBuffer();
+        }
         /**Drawing buffers */
         clear(mask: GLConstants) {
             if (mask & (~(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT | GLConstants.STENCIL_BUFFER_BIT))) {
                 throw Error("INVALID_ENUM");
             }
             if (mask & GLConstants.COLOR_BUFFER_BIT) {
-                let color = (this.clearColorR * 255 << 16) + (this.clearColorG * 255 << 8) + (this.clearColorB * 255 << 0);
-                this.context.fillStyle = `#${color.toString(16)}`;
-                this.context.globalAlpha = this.clearColorA;
-                this.context.fillRect(this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight);
+                let buffer = this.renderFrameBuffer.buffer!;
+                for (let i = 0; i < buffer.height; i++) {
+                    for (let j = 0; j < buffer.width; j++) {
+                        buffer.data[(i * buffer.width + j) * 4] = this.clearColorR * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColorG * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColorB * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColorA * 255 | 0;
+                    }
+                }
             }
             if (mask & GLConstants.DEPTH_BUFFER_BIT) {
                 throw Error("NOT_IMPLEMENT");

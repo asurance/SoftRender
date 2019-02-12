@@ -1,1 +1,1 @@
-["./bin/GLBuffer.js","./bin/GLConstants.js","./bin/GLContext.js","./bin/index.js","./bin/Main.js","./bin/MainView.js"]
+["./bin/GLBuffer.js","./bin/GLConstants.js","./bin/GLContext.js","./bin/GLRenderBuffer.js","./bin/index.js","./bin/Main.js","./bin/MainView.js"]
