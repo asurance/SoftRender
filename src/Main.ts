@@ -6,13 +6,8 @@ function main() {
         document.write('您的浏览器不支持canvas 2d 渲染,建议更换浏览器');
     }
     else {
-        canvas.width = document.documentElement.clientWidth;
-        canvas.height = document.documentElement.clientHeight;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        window.addEventListener('resize', (ev) => {
-            canvas.width = document.documentElement.clientWidth;
-            canvas.height = document.documentElement.clientHeight;
-        })
+        canvas.width = 800;
+        canvas.height = 600;
         document.body.appendChild(canvas);
         new MainView(ctx);
     }

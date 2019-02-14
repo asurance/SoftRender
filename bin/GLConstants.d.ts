@@ -1,24 +1,31 @@
 declare namespace GL {
-    const enum GLConstants {
+    const enum ClearType {
         /**Clearing buffers */
         DEPTH_BUFFER_BIT = 256,
         STENCIL_BUFFER_BIT = 1024,
-        COLOR_BUFFER_BIT = 16384,
-        /**Getting GL parameter information */
-        VIEWPORT = 2978,
-        COLOR_CLEAR_VALUE = 3106,
-        DEPTH_CLEAR_VALUE = 2931,
-        STENCIL_CLEAR_VALUE = 2961,
-        ARRAY_BUFFER_BINDING = 34964,
-        ELEMENT_ARRAY_BUFFER_BINDING = 34965,
-        /**Buffers */
-        STATIC_DRAW = 35044,
-        STREAM_DRAW = 35040,
-        DYNAMIC_DRAW = 35048,
+        COLOR_BUFFER_BIT = 16384
+    }
+    const enum BufferType {
         ARRAY_BUFFER = 34962,
-        ELEMENT_ARRAY_BUFFER = 34963,
-        BUFFER_SIZE = 34660,
-        BUFFER_USAGE = 34661
+        ELEMENT_ARRAY_BUFFER = 34963
+    }
+    const enum TypeType {
+        BYTE = 5120,
+        UNSIGNED_BYTE = 5121,
+        SHORT = 5122,
+        UNSIGNED_SHORT = 5123,
+        INT = 5124,
+        UNSIGNED_INT = 5125,
+        FLOAT = 5126
+    }
+    const enum PrimitiveType {
+        POINTS = 0,
+        LINES = 1,
+        LINE_LOOP = 2,
+        LINE_STRIP = 3,
+        TRIANGLES = 4,
+        TRIANGLE_STRIP = 5,
+        TRIANGLE_FAN = 6
     }
 }
 //# sourceMappingURL=GLConstants.d.ts.map

@@ -3,101 +3,47 @@ var GL;
 (function (GL) {
     class GLContext {
         constructor(context) {
-            this.context = context;
-            this.viewportX = 0;
-            this.viewportY = 0;
-            this.viewportWidth = context.canvas.width;
-            this.viewportHeight = context.canvas.height;
-            this.clearColorR = 0;
-            this.clearColorG = 0;
-            this.clearColorB = 0;
-            this.clearColorA = 0;
+            this.viewport = new Int32Array([0, 0, context.canvas.width, context.canvas.height]);
+            this.clearColor = [0, 0, 0, 0];
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
             this.renderFrameBuffer = new GL.GLRenderBuffer(context);
         }
         /**Viewing and clipping */
-        viewport(x, y, width, height) {
-            if (width < 0 || height < 0) {
-                throw Error("INVALID_VALUE");
+        setviewport(x, y, width, height) {
+            if (width < 0) {
+                throw Error("viewport的宽不能为负值");
             }
-            this.viewportX = x;
-            this.viewportY = y;
-            this.viewportWidth = width;
-            this.viewportHeight = height;
+            if (height < 0) {
+                throw Error("viewport的高不能为负值");
+            }
+            this.viewport[0] = x;
+            this.viewport[1] = y;
+            this.viewport[2] = width;
+            this.viewport[3] = height;
         }
         /**State information */
-        clearColor(red, green, blue, alpha) {
-            this.clearColorR = clampTo01(red);
-            this.clearColorG = clampTo01(green);
-            this.clearColorB = clampTo01(blue);
-            this.clearColorA = clampTo01(alpha);
-        }
-        getParameter(pname) {
-            switch (pname) {
-                case 2978 /* VIEWPORT */:
-                    return new Int32Array([this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight]);
-                case 3106 /* COLOR_CLEAR_VALUE */:
-                    return new Float32Array([this.clearColorR, this.clearColorG, this.clearColorB, this.clearColorA]);
-                case 2931 /* DEPTH_CLEAR_VALUE */:
-                    throw Error("NOT_IMPLEMENT");
-                case 2961 /* STENCIL_CLEAR_VALUE */:
-                    throw Error("NOT_IMPLEMENT");
-                case 34964 /* ARRAY_BUFFER_BINDING */:
-                    return this.arrayBuffer;
-                case 34965 /* ELEMENT_ARRAY_BUFFER_BINDING */:
-                    return this.elementArrayBuffer;
-                default:
-                    throw Error("INVALID_ENUM");
-            }
+        setclearColor(red, green, blue, alpha) {
+            this.clearColor[0] = clampTo01(red);
+            this.clearColor[1] = clampTo01(green);
+            this.clearColor[2] = clampTo01(blue);
+            this.clearColor[3] = clampTo01(alpha);
         }
         /**Buffers */
         bindBuffer(target, buffer) {
-            if (buffer == null) {
-                if (target == 34962 /* ARRAY_BUFFER */) {
-                    this.arrayBuffer = null;
-                }
-                else {
-                    this.elementArrayBuffer = null;
-                }
+            if (target == 34962 /* ARRAY_BUFFER */) {
+                this.arrayBuffer = buffer;
             }
             else {
-                if (buffer.Disposed) {
-                    throw Error("INVALID_OPERATION");
-                }
-                if (target == 34962 /* ARRAY_BUFFER */) {
-                    if (this.elementArrayBuffer == buffer) {
-                        throw Error("INVALID_OPERATION");
-                    }
-                    else {
-                        this.arrayBuffer = buffer;
-                    }
-                }
-                else {
-                    if (this.arrayBuffer == buffer) {
-                        throw Error("INVALID_OPERATION");
-                    }
-                    else {
-                        this.elementArrayBuffer = buffer;
-                    }
-                }
+                this.elementArrayBuffer = buffer;
             }
         }
-        bufferData(target, srcData, usage) {
+        bufferData(target, srcData) {
             if (typeof srcData == 'number' && srcData < 0) {
-                throw Error("INVALID_VALUE");
+                throw Error("srcData为number类型时不能取负值");
             }
             let targetBuffer = target == 34962 /* ARRAY_BUFFER */ ? this.arrayBuffer : this.elementArrayBuffer;
-            targetBuffer.SetData(srcData, usage);
-        }
-        getBufferParameter(target, pname) {
-            let targetBuffer = target == 34962 /* ARRAY_BUFFER */ ? this.arrayBuffer : this.elementArrayBuffer;
-            if (pname == 34660 /* BUFFER_SIZE */) {
-                return targetBuffer.data.byteLength;
-            }
-            else {
-                return targetBuffer.usage;
-            }
+            targetBuffer.SetData(srcData);
         }
         createBuffer() {
             return new GL.GLBuffer();
@@ -109,25 +55,35 @@ var GL;
         createRenderbuffer() {
             return new GL.GLRenderBuffer();
         }
+        /**Uniforms and attributes */
+        vertexAttribPointer(index, size, type, normalized, stride, offset) {
+            if (normalized) {
+                throw Error("NOT_IMPLEMENT");
+            }
+            else {
+                if (this.arrayBuffer) {
+                    this.arrayBuffer.SetAttribPointer(index, size, type, normalized, stride, offset);
+                }
+                else {
+                    throw Error("未绑定VAO时不能设置Attrib");
+                }
+            }
+        }
         /**Drawing buffers */
         clear(mask) {
             if (mask & (~(16384 /* COLOR_BUFFER_BIT */ | 256 /* DEPTH_BUFFER_BIT */ | 1024 /* STENCIL_BUFFER_BIT */))) {
-                throw Error("INVALID_ENUM");
+                throw Error("mask的中存在非法位");
             }
             if (mask & 16384 /* COLOR_BUFFER_BIT */) {
-                // let color = (this.clearColorR * 255 << 16) + (this.clearColorG * 255 << 8) + (this.clearColorB * 255 << 0);
                 let buffer = this.renderFrameBuffer.buffer;
                 for (let i = 0; i < buffer.height; i++) {
                     for (let j = 0; j < buffer.width; j++) {
-                        buffer.data[(i * buffer.width + j) * 4] = this.clearColorR * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColorG * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColorB * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColorA * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4] = this.clearColor[0] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColor[1] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColor[2] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColor[3] * 255 | 0;
                     }
                 }
-                // this.context.fillStyle = `#${color.toString(16)}`;
-                // this.context.globalAlpha = this.clearColorA;
-                // this.context.fillRect(this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight);
             }
             if (mask & 256 /* DEPTH_BUFFER_BIT */) {
                 throw Error("NOT_IMPLEMENT");
@@ -136,10 +92,132 @@ var GL;
                 throw Error("NOT_IMPLEMENT");
             }
         }
+        drawArrays(mode, first, count) {
+            if (mode == 4 /* TRIANGLES */) {
+                while (count > 2) {
+                    let traingle = this.arrayBuffer.GetData(first, 3);
+                    first += 3;
+                    count -= 3;
+                    traingle.forEach(this.transformToScreen.bind(this));
+                    drawTriangle(this.renderFrameBuffer.buffer, traingle);
+                }
+            }
+            else {
+                throw Error("NOT_IMPLEMENT");
+            }
+        }
+        transformToScreen(position) {
+            position[0] = Math.round((position[0] + 1) / 2 * this.viewport[2] + this.viewport[0]);
+            position[1] = Math.round((position[1] + 1) / 2 * this.viewport[3] + this.viewport[1]);
+        }
     }
     GL.GLContext = GLContext;
     function clampTo01(val) {
         return Math.max(Math.min(val, 1), 0);
+    }
+    function interpolation(a, b, ratio) {
+        return a + (b - a) * ratio;
+    }
+    function interpolationArr(a, b, ratio) {
+        let length = a.length;
+        let res = new Array(length);
+        for (let i = 0; i < length; i++) {
+            res[i] = a[i] + (b[i] - a[i]) * ratio;
+        }
+        return res;
+    }
+    function interpolationByIndex(a, b, index, target) {
+        let ratio = (target - a[index]) / (b[index] - a[index]);
+        let length = a.length;
+        let res = new Array(length);
+        for (let i = 0; i < length; i++) {
+            if (i == index) {
+                res[i] = target;
+            }
+            else {
+                res[i] = a[i] + (b[i] - a[i]) * ratio;
+            }
+        }
+        return res;
+    }
+    function interpolationRoundedByIndex(a, b, index, target) {
+        let ratio = (target - a[index]) / (b[index] - a[index]);
+        let length = a.length;
+        let res = new Array(length);
+        for (let i = 0; i < length; i++) {
+            if (i == index) {
+                res[i] = target;
+            }
+            else {
+                res[i] = Math.round(a[i] + (b[i] - a[i]) * ratio);
+            }
+        }
+        return res;
+    }
+    function drawTriangle(buffer, vertex) {
+        let flag = true;
+        for (let i = 0; i < 3; i++) {
+            if (vertex[i][1] == vertex[(i + 1) % 3][1]) {
+                drawHorizenTriangle(buffer, vertex[(i + 2) % 3], vertex[i], vertex[(i + 1) % 3]);
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            console.log('need draw not horizen triangle');
+        }
+    }
+    function drawHorizenTriangle(buffer, point, edgeA, edgeB) {
+        drawPointWithCheck(buffer, point[1], point[0], 0, 0, 0, 255);
+        let start;
+        let end;
+        if (point[1] < edgeA[1]) {
+            start = point[1] + 1;
+            end = edgeA[1];
+        }
+        else {
+            start = edgeA[1];
+            end = point[1] - 1;
+        }
+        for (let i = Math.max(start, 0); i < end; i++) {
+            if (i >= buffer.height) {
+                break;
+            }
+            else {
+                drawHorizenLine(buffer, interpolationRoundedByIndex(point, edgeA, 1, i), interpolationRoundedByIndex(point, edgeB, 1, i));
+            }
+        }
+    }
+    function drawHorizenLine(buffer, lineA, lineB) {
+        let start;
+        let end;
+        if (lineA[0] < lineB[0]) {
+            start = lineA[0];
+            end = lineB[0];
+        }
+        else {
+            start = lineB[0];
+            end = lineA[0];
+        }
+        for (let i = Math.max(start, 0); i < end; i++) {
+            if (i >= buffer.width) {
+                break;
+            }
+            else {
+                drawPoint(buffer, lineA[1], i, 0, 0, 0, 255);
+            }
+        }
+    }
+    function drawPointWithCheck(buffer, row, col, r, g, b, a) {
+        if (row >= 0 && row < buffer.height && col >= 0 && col < buffer.width) {
+            drawPoint(buffer, row, col, 0, 0, 0, 255);
+        }
+    }
+    function drawPoint(buffer, row, col, r, g, b, a) {
+        buffer.data[(row * buffer.width + col) * 4] = r;
+        buffer.data[(row * buffer.width + col) * 4 + 1] = g;
+        buffer.data[(row * buffer.width + col) * 4 + 2] = b;
+        buffer.data[(row * buffer.width + col) * 4 + 3] = a;
     }
 })(GL || (GL = {}));
 //# sourceMappingURL=GLContext.js.map

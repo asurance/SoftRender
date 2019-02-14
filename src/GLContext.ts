@@ -1,113 +1,52 @@
 namespace GL {
     export class GLContext {
-        private context: CanvasRenderingContext2D;
-        private viewportX: number;
-        private viewportY: number;
-        private viewportWidth: number;
-        private viewportHeight: number;
-        private clearColorR: number;
-        private clearColorG: number;
-        private clearColorB: number;
-        private clearColorA: number;
+        private viewport: Int32Array;
+        private clearColor: number[];
         private arrayBuffer: GLBuffer | null;
         private elementArrayBuffer: GLBuffer | null;
         private renderFrameBuffer: GLRenderBuffer;
         constructor(context: CanvasRenderingContext2D) {
-            this.context = context;
-            this.viewportX = 0;
-            this.viewportY = 0;
-            this.viewportWidth = context.canvas.width;
-            this.viewportHeight = context.canvas.height;
-            this.clearColorR = 0;
-            this.clearColorG = 0;
-            this.clearColorB = 0;
-            this.clearColorA = 0;
+            this.viewport = new Int32Array([0, 0, context.canvas.width, context.canvas.height]);
+            this.clearColor = [0, 0, 0, 0];
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
             this.renderFrameBuffer = new GLRenderBuffer(context);
         }
         /**Viewing and clipping */
-        viewport(x: number, y: number, width: number, height: number) {
-            if (width < 0 || height < 0) {
-                throw Error("INVALID_VALUE");
+        setviewport(x: number, y: number, width: number, height: number) {
+            if (width < 0) {
+                throw Error("viewport的宽不能为负值");
             }
-            this.viewportX = x;
-            this.viewportY = y;
-            this.viewportWidth = width;
-            this.viewportHeight = height;
+            if (height < 0) {
+                throw Error("viewport的高不能为负值");
+            }
+            this.viewport[0] = x;
+            this.viewport[1] = y;
+            this.viewport[2] = width;
+            this.viewport[3] = height;
         }
         /**State information */
-        clearColor(red: number, green: number, blue: number, alpha: number) {
-            this.clearColorR = clampTo01(red);
-            this.clearColorG = clampTo01(green);
-            this.clearColorB = clampTo01(blue);
-            this.clearColorA = clampTo01(alpha);
-        }
-        getParameter(pname: GLConstants) {
-            switch (pname) {
-                case GLConstants.VIEWPORT:
-                    return new Int32Array([this.viewportX, this.viewportY, this.viewportWidth, this.viewportHeight]);
-                case GLConstants.COLOR_CLEAR_VALUE:
-                    return new Float32Array([this.clearColorR, this.clearColorG, this.clearColorB, this.clearColorA]);
-                case GLConstants.DEPTH_CLEAR_VALUE:
-                    throw Error("NOT_IMPLEMENT");
-                case GLConstants.STENCIL_CLEAR_VALUE:
-                    throw Error("NOT_IMPLEMENT");
-                case GLConstants.ARRAY_BUFFER_BINDING:
-                    return this.arrayBuffer;
-                case GLConstants.ELEMENT_ARRAY_BUFFER_BINDING:
-                    return this.elementArrayBuffer;
-                default:
-                    throw Error("INVALID_ENUM");
-            }
+        setclearColor(red: number, green: number, blue: number, alpha: number) {
+            this.clearColor[0] = clampTo01(red);
+            this.clearColor[1] = clampTo01(green);
+            this.clearColor[2] = clampTo01(blue);
+            this.clearColor[3] = clampTo01(alpha);
         }
         /**Buffers */
-        bindBuffer(target: GLConstants.ARRAY_BUFFER | GLConstants.ELEMENT_ARRAY_BUFFER, buffer: GLBuffer | null) {
-            if (buffer == null) {
-                if (target == GLConstants.ARRAY_BUFFER) {
-                    this.arrayBuffer = null;
-                }
-                else {
-                    this.elementArrayBuffer = null;
-                }
+        bindBuffer(target: BufferType, buffer: GLBuffer | null) {
+            if (target == BufferType.ARRAY_BUFFER) {
+                this.arrayBuffer = buffer;
             }
             else {
-                if (buffer.Disposed) {
-                    throw Error("INVALID_OPERATION");
-                }
-                if (target == GLConstants.ARRAY_BUFFER) {
-                    if (this.elementArrayBuffer == buffer) {
-                        throw Error("INVALID_OPERATION");
-                    }
-                    else {
-                        this.arrayBuffer = buffer;
-                    }
-                }
-                else {
-                    if (this.arrayBuffer == buffer) {
-                        throw Error("INVALID_OPERATION");
-                    }
-                    else {
-                        this.elementArrayBuffer = buffer;
-                    }
-                }
+                this.elementArrayBuffer = buffer;
             }
         }
-        bufferData(target: GLConstants.ARRAY_BUFFER | GLConstants.ELEMENT_ARRAY_BUFFER, srcData: number | ArrayBuffer | ArrayBufferView | null, usage: GLConstants.STATIC_DRAW | GLConstants.DYNAMIC_DRAW | GLConstants.STREAM_DRAW) {
+        bufferData(target: BufferType, srcData: number | ArrayBuffer | ArrayBufferView) {
             if (typeof srcData == 'number' && srcData < 0) {
-                throw Error("INVALID_VALUE");
+                throw Error("srcData为number类型时不能取负值");
             }
-            let targetBuffer = target == GLConstants.ARRAY_BUFFER ? this.arrayBuffer! : this.elementArrayBuffer!;
-            targetBuffer.SetData(srcData, usage);
-        }
-        getBufferParameter(target: GLConstants.ARRAY_BUFFER | GLConstants.ELEMENT_ARRAY_BUFFER, pname: GLConstants.BUFFER_SIZE | GLConstants.BUFFER_USAGE) {
-            let targetBuffer = target == GLConstants.ARRAY_BUFFER ? this.arrayBuffer! : this.elementArrayBuffer!;
-            if (pname == GLConstants.BUFFER_SIZE) {
-                return targetBuffer.data!.byteLength;
-            }
-            else {
-                return targetBuffer.usage;
-            }
+            let targetBuffer = target == BufferType.ARRAY_BUFFER ? this.arrayBuffer! : this.elementArrayBuffer!;
+            targetBuffer.SetData(srcData);
         }
         createBuffer() {
             return new GLBuffer();
@@ -119,32 +58,178 @@ namespace GL {
         createRenderbuffer() {
             return new GLRenderBuffer();
         }
-        /**Drawing buffers */
-        clear(mask: GLConstants) {
-            if (mask & (~(GLConstants.COLOR_BUFFER_BIT | GLConstants.DEPTH_BUFFER_BIT | GLConstants.STENCIL_BUFFER_BIT))) {
-                throw Error("INVALID_ENUM");
+        /**Uniforms and attributes */
+        vertexAttribPointer(index: number, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number) {
+            if (normalized) {
+                throw Error("NOT_IMPLEMENT");
             }
-            if (mask & GLConstants.COLOR_BUFFER_BIT) {
+            else {
+                if (this.arrayBuffer) {
+                    this.arrayBuffer.SetAttribPointer(index, size, type, normalized, stride, offset);
+                }
+                else {
+                    throw Error("未绑定VAO时不能设置Attrib")
+                }
+            }
+        }
+        /**Drawing buffers */
+        clear(mask: number) {
+            if (mask & (~(ClearType.COLOR_BUFFER_BIT | ClearType.DEPTH_BUFFER_BIT | ClearType.STENCIL_BUFFER_BIT))) {
+                throw Error("mask的中存在非法位");
+            }
+            if (mask & ClearType.COLOR_BUFFER_BIT) {
                 let buffer = this.renderFrameBuffer.buffer!;
                 for (let i = 0; i < buffer.height; i++) {
                     for (let j = 0; j < buffer.width; j++) {
-                        buffer.data[(i * buffer.width + j) * 4] = this.clearColorR * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColorG * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColorB * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColorA * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4] = this.clearColor[0] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColor[1] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColor[2] * 255 | 0;
+                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColor[3] * 255 | 0;
                     }
                 }
             }
-            if (mask & GLConstants.DEPTH_BUFFER_BIT) {
+            if (mask & ClearType.DEPTH_BUFFER_BIT) {
                 throw Error("NOT_IMPLEMENT");
             }
-            if (mask & GLConstants.STENCIL_BUFFER_BIT) {
+            if (mask & ClearType.STENCIL_BUFFER_BIT) {
                 throw Error("NOT_IMPLEMENT");
             }
+        }
+        drawArrays(mode: PrimitiveType, first: number, count: number) {
+            if (mode == PrimitiveType.TRIANGLES) {
+                while (count > 2) {
+                    let traingle = this.arrayBuffer!.GetData(first, 3);
+                    first += 3;
+                    count -= 3;
+                    traingle.forEach(this.transformToScreen.bind(this));
+                    drawTriangle(this.renderFrameBuffer.buffer!, traingle);
+                }
+            }
+            else {
+                throw Error("NOT_IMPLEMENT");
+            }
+        }
+
+        private transformToScreen(position: number[]) {
+            position[0] = Math.round((position[0] + 1) / 2 * this.viewport[2] + this.viewport[0]);
+            position[1] = Math.round((position[1] + 1) / 2 * this.viewport[3] + this.viewport[1]);
         }
     }
 
     function clampTo01(val: number) {
         return Math.max(Math.min(val, 1), 0);
+    }
+
+    function interpolation(a: number, b: number, ratio: number) {
+        return a + (b - a) * ratio;
+    }
+
+    function interpolationArr(a: number[], b: number[], ratio: number) {
+        let length = a.length;
+        let res = new Array<number>(length);
+        for (let i = 0; i < length; i++) {
+            res[i] = a[i] + (b[i] - a[i]) * ratio;
+        }
+        return res;
+    }
+
+    function interpolationByIndex(a: number[], b: number[], index: number, target: number) {
+        let ratio = (target - a[index]) / (b[index] - a[index]);
+        let length = a.length;
+        let res = new Array(length);
+        for (let i = 0; i < length; i++) {
+            if (i == index) {
+                res[i] = target;
+            }
+            else {
+                res[i] = a[i] + (b[i] - a[i]) * ratio;
+            }
+        }
+        return res;
+    }
+
+    function interpolationRoundedByIndex(a: number[], b: number[], index: number, target: number) {
+        let ratio = (target - a[index]) / (b[index] - a[index]);
+        let length = a.length;
+        let res = new Array(length);
+        for (let i = 0; i < length; i++) {
+            if (i == index) {
+                res[i] = target;
+            }
+            else {
+                res[i] = Math.round(a[i] + (b[i] - a[i]) * ratio);
+            }
+        }
+        return res;
+    }
+
+    function drawTriangle(buffer: ImageData, vertex: number[][]) {
+        let flag = true;
+        for (let i = 0; i < 3; i++) {
+            if (vertex[i][1] == vertex[(i + 1) % 3][1]) {
+                drawHorizenTriangle(buffer, vertex[(i + 2) % 3], vertex[i], vertex[(i + 1) % 3]);
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            console.log('need draw not horizen triangle');
+        }
+    }
+
+    function drawHorizenTriangle(buffer: ImageData, point: number[], edgeA: number[], edgeB: number[]) {
+        drawPointWithCheck(buffer, point[1], point[0], 0, 0, 0, 255);
+        let start;
+        let end;
+        if (point[1] < edgeA[1]) {
+            start = point[1] + 1;
+            end = edgeA[1];
+        }
+        else {
+            start = edgeA[1];
+            end = point[1] - 1;
+        }
+        for (let i = Math.max(start, 0); i < end; i++) {
+            if (i >= buffer.height) {
+                break;
+            }
+            else {
+                drawHorizenLine(buffer, interpolationRoundedByIndex(point, edgeA, 1, i), interpolationRoundedByIndex(point, edgeB, 1, i));
+            }
+        }
+    }
+
+    function drawHorizenLine(buffer: ImageData, lineA: number[], lineB: number[]) {
+        let start;
+        let end;
+        if (lineA[0] < lineB[0]) {
+            start = lineA[0];
+            end = lineB[0]
+        }
+        else {
+            start = lineB[0];
+            end = lineA[0];
+        }
+        for (let i = Math.max(start, 0); i < end; i++) {
+            if (i >= buffer.width) {
+                break;
+            }
+            else {
+                drawPoint(buffer, lineA[1], i, 0, 0, 0, 255);
+            }
+        }
+    }
+
+    function drawPointWithCheck(buffer: ImageData, row: number, col: number, r: number, g: number, b: number, a: number) {
+        if (row >= 0 && row < buffer.height && col >= 0 && col < buffer.width) {
+            drawPoint(buffer, row, col, 0, 0, 0, 255)
+        }
+    }
+
+    function drawPoint(buffer: ImageData, row: number, col: number, r: number, g: number, b: number, a: number) {
+        buffer.data[(row * buffer.width + col) * 4] = r;
+        buffer.data[(row * buffer.width + col) * 4 + 1] = g;
+        buffer.data[(row * buffer.width + col) * 4 + 2] = b;
+        buffer.data[(row * buffer.width + col) * 4 + 3] = a;
     }
 }
