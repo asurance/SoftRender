@@ -1,15 +1,16 @@
 declare namespace GL {
     class GLContext {
-        private viewport;
-        private clearColor;
+        private _Viewport;
+        private _ClearColor;
         private arrayBuffer;
         private elementArrayBuffer;
         private renderFrameBuffer;
+        private program;
         constructor(context: CanvasRenderingContext2D);
         /**Viewing and clipping */
-        setviewport(x: number, y: number, width: number, height: number): void;
+        viewport(x: number, y: number, width: number, height: number): void;
         /**State information */
-        setclearColor(red: number, green: number, blue: number, alpha: number): void;
+        clearColor(red: number, green: number, blue: number, alpha: number): void;
         /**Buffers */
         bindBuffer(target: BufferType, buffer: GLBuffer | null): void;
         bufferData(target: BufferType, srcData: number | ArrayBuffer | ArrayBufferView): void;

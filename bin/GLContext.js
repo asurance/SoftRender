@@ -3,31 +3,32 @@ var GL;
 (function (GL) {
     class GLContext {
         constructor(context) {
-            this.viewport = new Int32Array([0, 0, context.canvas.width, context.canvas.height]);
-            this.clearColor = [0, 0, 0, 0];
+            this._Viewport = new Int32Array([0, 0, context.canvas.width, context.canvas.height]);
+            this._ClearColor = new Uint8ClampedArray([0, 0, 0, 0]);
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
+            this.program = null;
             this.renderFrameBuffer = new GL.GLRenderBuffer(context);
         }
         /**Viewing and clipping */
-        setviewport(x, y, width, height) {
+        viewport(x, y, width, height) {
             if (width < 0) {
                 throw Error("viewport的宽不能为负值");
             }
             if (height < 0) {
                 throw Error("viewport的高不能为负值");
             }
-            this.viewport[0] = x;
-            this.viewport[1] = y;
-            this.viewport[2] = width;
-            this.viewport[3] = height;
+            this._Viewport[0] = x;
+            this._Viewport[1] = y;
+            this._Viewport[2] = width;
+            this._Viewport[3] = height;
         }
         /**State information */
-        setclearColor(red, green, blue, alpha) {
-            this.clearColor[0] = clampTo01(red);
-            this.clearColor[1] = clampTo01(green);
-            this.clearColor[2] = clampTo01(blue);
-            this.clearColor[3] = clampTo01(alpha);
+        clearColor(red, green, blue, alpha) {
+            this._ClearColor[0] = red * 255;
+            this._ClearColor[1] = green * 255;
+            this._ClearColor[2] = blue * 255;
+            this._ClearColor[3] = alpha * 255;
         }
         /**Buffers */
         bindBuffer(target, buffer) {
@@ -78,10 +79,7 @@ var GL;
                 let buffer = this.renderFrameBuffer.buffer;
                 for (let i = 0; i < buffer.height; i++) {
                     for (let j = 0; j < buffer.width; j++) {
-                        buffer.data[(i * buffer.width + j) * 4] = this.clearColor[0] * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 1] = this.clearColor[1] * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 2] = this.clearColor[2] * 255 | 0;
-                        buffer.data[(i * buffer.width + j) * 4 + 3] = this.clearColor[3] * 255 | 0;
+                        buffer.data.set(this._ClearColor, (i * buffer.width + j) * 4);
                     }
                 }
             }
@@ -107,8 +105,8 @@ var GL;
             }
         }
         transformToScreen(position) {
-            position[0] = Math.round((position[0] + 1) / 2 * this.viewport[2] + this.viewport[0]);
-            position[1] = Math.round((position[1] + 1) / 2 * this.viewport[3] + this.viewport[1]);
+            position[0] = Math.round((position[0] + 1) / 2 * this._Viewport[2] + this._Viewport[0]);
+            position[1] = Math.round((position[1] + 1) / 2 * this._Viewport[3] + this._Viewport[1]);
         }
     }
     GL.GLContext = GLContext;

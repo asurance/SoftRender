@@ -11,7 +11,7 @@ class MainView {
     }
     render() {
         console.log(this.renderID);
-        this.gl.setclearColor((this.renderID % 100) / 100, 0, 0, (Math.sin(this.renderID / 100) + 1) / 2);
+        this.gl.clearColor((this.renderID % 100) / 100, 0, 0, (Math.sin(this.renderID / 100) + 1) / 2);
         this.gl.clear(16384 /* COLOR_BUFFER_BIT */);
         this.gl.drawArrays(4 /* TRIANGLES */, 0, 3);
         this.renderID = requestAnimationFrame(this.render.bind(this));
