@@ -1,8 +1,14 @@
 declare namespace GL {
-    class GLProgram<A2V, V2P, P2B> {
-        VertexShader: (v: A2V) => V2P;
-        PixelShader: (i: V2P) => P2B;
-        constructor(vertexShader: (v: A2V) => V2P, pixelShader: (i: V2P) => P2B);
+    type uniforms = {
+        [key: string]: any;
+    };
+    class GLProgram<A2V = any, V2P extends {
+        position: number[];
+    } = any, P2B extends {
+        color: number[];
+    } = any> {
+        VertexShader: (v: A2V, u: uniforms) => V2P;
+        PixelShader: (i: V2P, u: uniforms) => P2B;
+        constructor(vertexShader: (v: A2V, u: uniforms) => V2P, pixelShader: (i: V2P, u: uniforms) => P2B);
     }
 }
-//# sourceMappingURL=GLProgram.d.ts.map

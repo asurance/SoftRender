@@ -6,4 +6,3 @@ declare namespace GL {
         private render;
     }
 }
-//# sourceMappingURL=GLRenderBuffer.d.ts.map

@@ -26,4 +26,3 @@ declare namespace GL {
         private transformToScreen;
     }
 }
-//# sourceMappingURL=GLContext.d.ts.map

@@ -6,7 +6,7 @@ class MainView {
         this.gl = new GL.GLContext(ctx);
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(GL.BufferType.ARRAY_BUFFER, this.buffer);
-        let vertice = new Float32Array([0, 0, 0, 1, 1, 1]);
+        let vertice = new Float32Array([0, 0, -1, -1, -1, 1]);
         this.gl.bufferData(GL.BufferType.ARRAY_BUFFER, vertice);
         this.gl.vertexAttribPointer(0, 2, GL.TypeType.FLOAT, false, 8, 0);
         this.renderID = requestAnimationFrame(this.render.bind(this));

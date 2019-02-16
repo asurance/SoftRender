@@ -17,4 +17,3 @@ declare namespace GL {
         constructor(size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number);
     }
 }
-//# sourceMappingURL=GLBuffer.d.ts.map

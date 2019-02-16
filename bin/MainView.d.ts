@@ -5,4 +5,3 @@ declare class MainView {
     constructor(ctx: CanvasRenderingContext2D);
     render(): void;
 }
-//# sourceMappingURL=MainView.d.ts.map

@@ -162,7 +162,9 @@ var GL;
             }
         }
         if (flag) {
-            console.log('need draw not horizen triangle');
+            let mid = interpolationRoundedByIndex(vertex[1], vertex[2], 1, vertex[0][1]);
+            drawHorizenTriangle(buffer, vertex[1], vertex[0], mid);
+            drawHorizenTriangle(buffer, vertex[2], vertex[0], mid);
         }
     }
     function drawHorizenTriangle(buffer, point, edgeA, edgeB) {

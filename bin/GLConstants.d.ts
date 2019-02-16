@@ -28,4 +28,3 @@ declare namespace GL {
         TRIANGLE_FAN = 6
     }
 }
-//# sourceMappingURL=GLConstants.d.ts.map
