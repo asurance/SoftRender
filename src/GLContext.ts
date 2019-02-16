@@ -60,14 +60,35 @@ namespace GL {
         createRenderbuffer() {
             return new GLRenderBuffer();
         }
+        /**Programs and shaders */
+        createProgram(vertexShader: (input: any, uniform: any, varying: any) => number[], fragmentShader: (uniform: any, varying: any) => number[]) {
+            return new GLProgram(vertexShader, fragmentShader);
+        }
+        useProgram(program: GLProgram) {
+            this.program = program;
+        }
         /**Uniforms and attributes */
-        vertexAttribPointer(index: number, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number) {
+        uniformnv(key: string, value: number[]) {
+            if (this.program!.uniform[key]) {
+                let list = this.program!.uniform[key] as number[];
+                if (list.length > value.length) {
+                    list.splice(value.length);
+                }
+                value.forEach((val, i) => {
+                    list[i] = val;
+                });
+            }
+            else {
+                this.program!.uniform[key] = value.concat();
+            }
+        }
+        vertexAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number) {
             if (normalized) {
                 throw Error("NOT_IMPLEMENT");
             }
             else {
                 if (this.arrayBuffer) {
-                    this.arrayBuffer.SetAttribPointer(index, size, type, normalized, stride, offset);
+                    this.arrayBuffer.SetAttribPointer(key, size, type, normalized, stride, offset);
                 }
                 else {
                     throw Error("未绑定VAO时不能设置Attrib")
@@ -97,9 +118,12 @@ namespace GL {
         drawArrays(mode: PrimitiveType, first: number, count: number) {
             if (mode == PrimitiveType.TRIANGLES) {
                 while (count > 2) {
-                    let traingle = this.arrayBuffer!.GetData(first, 3);
+                    let vertice = this.arrayBuffer!.GetData(first, 3);
                     first += 3;
                     count -= 3;
+                    let traingle = vertice.map((vertex) => {
+                        return this.program!.GetPositonByVertexShader(vertex);
+                    })
                     traingle.forEach(this.transformToScreen.bind(this));
                     drawTriangle(this.renderFrameBuffer.buffer!, traingle);
                 }

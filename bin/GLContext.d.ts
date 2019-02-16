@@ -18,8 +18,12 @@ declare namespace GL {
         deleteBuffer(buffer: GLBuffer): void;
         /**Renderbuffers */
         createRenderbuffer(): GLRenderBuffer;
+        /**Programs and shaders */
+        createProgram(vertexShader: (input: any, uniform: any, varying: any) => number[], fragmentShader: (uniform: any, varying: any) => number[]): GLProgram;
+        useProgram(program: GLProgram): void;
         /**Uniforms and attributes */
-        vertexAttribPointer(index: number, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number): void;
+        uniformnv(key: string, value: number[]): void;
+        vertexAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number): void;
         /**Drawing buffers */
         clear(mask: number): void;
         drawArrays(mode: PrimitiveType, first: number, count: number): void;

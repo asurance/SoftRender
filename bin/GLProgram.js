@@ -2,9 +2,14 @@
 var GL;
 (function (GL) {
     class GLProgram {
-        constructor(vertexShader, pixelShader) {
+        constructor(vertexShader, fragmentShader) {
             this.VertexShader = vertexShader;
-            this.PixelShader = pixelShader;
+            this.FragmentShader = fragmentShader;
+            this.uniform = {};
+            this.varying = {};
+        }
+        GetPositonByVertexShader(vertex) {
+            return this.VertexShader(vertex, this.uniform, this.varying);
         }
     }
     GL.GLProgram = GLProgram;

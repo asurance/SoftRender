@@ -56,14 +56,35 @@ var GL;
         createRenderbuffer() {
             return new GL.GLRenderBuffer();
         }
+        /**Programs and shaders */
+        createProgram(vertexShader, fragmentShader) {
+            return new GL.GLProgram(vertexShader, fragmentShader);
+        }
+        useProgram(program) {
+            this.program = program;
+        }
         /**Uniforms and attributes */
-        vertexAttribPointer(index, size, type, normalized, stride, offset) {
+        uniformnv(key, value) {
+            if (this.program.uniform[key]) {
+                let list = this.program.uniform[key];
+                if (list.length > value.length) {
+                    list.splice(value.length);
+                }
+                value.forEach((val, i) => {
+                    list[i] = val;
+                });
+            }
+            else {
+                this.program.uniform[key] = value.concat();
+            }
+        }
+        vertexAttribPointer(key, size, type, normalized, stride, offset) {
             if (normalized) {
                 throw Error("NOT_IMPLEMENT");
             }
             else {
                 if (this.arrayBuffer) {
-                    this.arrayBuffer.SetAttribPointer(index, size, type, normalized, stride, offset);
+                    this.arrayBuffer.SetAttribPointer(key, size, type, normalized, stride, offset);
                 }
                 else {
                     throw Error("未绑定VAO时不能设置Attrib");
@@ -93,9 +114,12 @@ var GL;
         drawArrays(mode, first, count) {
             if (mode == 4 /* TRIANGLES */) {
                 while (count > 2) {
-                    let traingle = this.arrayBuffer.GetData(first, 3);
+                    let vertice = this.arrayBuffer.GetData(first, 3);
                     first += 3;
                     count -= 3;
+                    let traingle = vertice.map((vertex) => {
+                        return this.program.GetPositonByVertexShader(vertex);
+                    });
                     traingle.forEach(this.transformToScreen.bind(this));
                     drawTriangle(this.renderFrameBuffer.buffer, traingle);
                 }

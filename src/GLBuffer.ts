@@ -1,9 +1,9 @@
 namespace GL {
     export class GLBuffer {
         data: ArrayBuffer | undefined;
-        layout: GLLayout[];
+        layout: { [key: string]: GLBufferLayout };
         constructor() {
-            this.layout = [];
+            this.layout = {};
         }
         SetData(srcData: number | ArrayBuffer | ArrayBufferView) {
             if (typeof srcData == 'number') {
@@ -16,23 +16,26 @@ namespace GL {
                 this.data = srcData.buffer;
             }
         }
-        SetAttribPointer(index: number, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number) {
-            if (this.layout[index]) {
-                this.layout[index].size = size;
-                this.layout[index].type = type;
-                this.layout[index].stride = stride;
-                this.layout[index].offset = offset;
+        SetAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: TypeType, normalized: boolean, stride: number, offset: number) {
+            if (this.layout[key]) {
+                this.layout[key].size = size;
+                this.layout[key].type = type;
+                this.layout[key].stride = stride;
+                this.layout[key].offset = offset;
             }
             else {
-                this.layout[index] = new GLLayout(size, type, normalized, stride, offset);
+                this.layout[key] = new GLBufferLayout(size, type, normalized, stride, offset);
             }
         }
         GetData(first: number, count: number) {
-            let res = new Array<number[]>(count);
-            for (let i = 0; i < this.layout.length; i++) {
-                for (let j = 0; j < count; j++) {
-                    let offset = (first + j) * this.layout[i].stride + this.layout[i].offset;
-                    res[j] = GetValueFromBuffer(this.layout[i].type, this.data!, this.layout[i].size, offset);
+            let res = new Array<any>(count);
+            for (let i = 0; i < res.length; i++) {
+                res[i] = {};
+            }
+            for (let i = 0; i < count; i++) {
+                for (let key in this.layout) {
+                    let offset = (first + i) * this.layout[key].stride + this.layout[key].offset;
+                    res[i][key] = GetValueFromBuffer(this.layout[key].type, this.data!, this.layout[key].size, offset);
                 }
             }
             return res;
@@ -42,7 +45,7 @@ namespace GL {
         }
     }
 
-    class GLLayout {
+    class GLBufferLayout {
         size: 1 | 2 | 3 | 4;
         type: TypeType;
         normalized: boolean;

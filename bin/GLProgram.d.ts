@@ -1,14 +1,10 @@
 declare namespace GL {
-    type uniforms = {
-        [key: string]: any;
-    };
-    class GLProgram<A2V = any, V2P extends {
-        position: number[];
-    } = any, P2B extends {
-        color: number[];
-    } = any> {
-        VertexShader: (v: A2V, u: uniforms) => V2P;
-        PixelShader: (i: V2P, u: uniforms) => P2B;
-        constructor(vertexShader: (v: A2V, u: uniforms) => V2P, pixelShader: (i: V2P, u: uniforms) => P2B);
+    class GLProgram {
+        uniform: any;
+        private varying;
+        private VertexShader;
+        private FragmentShader;
+        constructor(vertexShader: (input: any, uniform: any, varying: any) => number[], fragmentShader: (uniform: any, varying: any) => number[]);
+        GetPositonByVertexShader(vertex: any): number[];
     }
 }
