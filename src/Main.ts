@@ -1,3 +1,5 @@
+import { MainView } from './MainView'
+
 function main() {
     const canvas = document.createElement('canvas');
     document.getElementById('document');
@@ -12,6 +14,7 @@ function main() {
         new MainView(ctx);
     }
 }
+main();
 
 
 

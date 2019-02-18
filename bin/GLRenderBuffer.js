@@ -1,6 +1,6 @@
-"use strict";
-var GL;
-(function (GL) {
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     class GLRenderBuffer {
         constructor(context) {
             if (context != undefined) {
@@ -14,6 +14,6 @@ var GL;
             requestAnimationFrame(this.render.bind(this));
         }
     }
-    GL.GLRenderBuffer = GLRenderBuffer;
-})(GL || (GL = {}));
+    exports.GLRenderBuffer = GLRenderBuffer;
+});
 //# sourceMappingURL=GLRenderBuffer.js.map
