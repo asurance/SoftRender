@@ -1,1 +1,1 @@
-declare function main(): void;
+export {};

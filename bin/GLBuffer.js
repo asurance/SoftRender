@@ -1,6 +1,6 @@
-"use strict";
-var GL;
-(function (GL) {
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     class GLBuffer {
         constructor() {
             this.layout = {};
@@ -44,7 +44,7 @@ var GL;
             this.data = undefined;
         }
     }
-    GL.GLBuffer = GLBuffer;
+    exports.GLBuffer = GLBuffer;
     class GLBufferLayout {
         constructor(size, type, normalized, stride, offset) {
             this.size = size;
@@ -83,5 +83,5 @@ var GL;
         }
         return res;
     }
-})(GL || (GL = {}));
+});
 //# sourceMappingURL=GLBuffer.js.map

@@ -1,6 +1,6 @@
-"use strict";
-var GL;
-(function (GL) {
+define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], function (require, exports, GLBuffer_1, GLRenderBuffer_1, GLProgram_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     class GLContext {
         constructor(context) {
             this._Viewport = new Int32Array([0, 0, context.canvas.width, context.canvas.height]);
@@ -8,7 +8,7 @@ var GL;
             this.arrayBuffer = null;
             this.elementArrayBuffer = null;
             this.program = null;
-            this.renderFrameBuffer = new GL.GLRenderBuffer(context);
+            this.renderFrameBuffer = new GLRenderBuffer_1.GLRenderBuffer(context);
         }
         /**Viewing and clipping */
         viewport(x, y, width, height) {
@@ -47,18 +47,18 @@ var GL;
             targetBuffer.SetData(srcData);
         }
         createBuffer() {
-            return new GL.GLBuffer();
+            return new GLBuffer_1.GLBuffer();
         }
         deleteBuffer(buffer) {
             buffer.Dispose();
         }
         /**Renderbuffers */
         createRenderbuffer() {
-            return new GL.GLRenderBuffer();
+            return new GLRenderBuffer_1.GLRenderBuffer();
         }
         /**Programs and shaders */
         createProgram(vertexShader, fragmentShader) {
-            return new GL.GLProgram(vertexShader, fragmentShader);
+            return new GLProgram_1.GLProgram(vertexShader, fragmentShader);
         }
         useProgram(program) {
             this.program = program;
@@ -133,7 +133,7 @@ var GL;
             position[1] = Math.round((position[1] + 1) / 2 * this._Viewport[3] + this._Viewport[1]);
         }
     }
-    GL.GLContext = GLContext;
+    exports.GLContext = GLContext;
     function clampTo01(val) {
         return Math.max(Math.min(val, 1), 0);
     }
@@ -243,5 +243,5 @@ var GL;
         buffer.data[(row * buffer.width + col) * 4 + 2] = b;
         buffer.data[(row * buffer.width + col) * 4 + 3] = a;
     }
-})(GL || (GL = {}));
+});
 //# sourceMappingURL=GLContext.js.map

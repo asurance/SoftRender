@@ -1,6 +1,6 @@
-"use strict";
-var GL;
-(function (GL) {
+define(["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     class GLProgram {
         constructor(vertexShader, fragmentShader) {
             this.VertexShader = vertexShader;
@@ -12,6 +12,6 @@ var GL;
             return this.VertexShader(vertex, this.uniform, this.varying);
         }
     }
-    GL.GLProgram = GLProgram;
-})(GL || (GL = {}));
+    exports.GLProgram = GLProgram;
+});
 //# sourceMappingURL=GLProgram.js.map
