@@ -200,14 +200,29 @@ function drawTriangle(buffer: ImageData, vertex: number[][]) {
         }
     }
     if (flag) {
-        let mid = interpolationRoundedByIndex(vertex[1], vertex[2], 1, vertex[0][1]);
-        drawHorizenTriangle(buffer, vertex[1], vertex[0], mid);
-        drawHorizenTriangle(buffer, vertex[2], vertex[0], mid);
+        let max = vertex[0][1];
+        let maxi = 0;
+        let min = vertex[0][1];
+        let mini = 0;
+        for (let i = 1; i < 3; i++) {
+            if (max < vertex[i][1]) {
+                max = vertex[i][1];
+                maxi = i;
+            }
+            if (min > vertex[i][1]) {
+                min = vertex[i][1];
+                mini = i;
+            }
+        }
+        let midi = 3 - maxi - mini;
+        let mid = interpolationRoundedByIndex(vertex[mini], vertex[maxi], 1, vertex[midi][1]);
+        drawHorizenTriangle(buffer, vertex[mini], vertex[midi], mid);
+        drawHorizenTriangle(buffer, vertex[maxi], vertex[midi], mid);
     }
 }
 
 function drawHorizenTriangle(buffer: ImageData, point: number[], edgeA: number[], edgeB: number[]) {
-    drawPointWithCheck(buffer, point[1], point[0], 0, 0, 0, 255);
+    drawPointWithCheck(buffer, point[1], point[0], 255, 255, 255, 255);
     let start;
     let end;
     if (point[1] < edgeA[1]) {
@@ -244,14 +259,14 @@ function drawHorizenLine(buffer: ImageData, lineA: number[], lineB: number[]) {
             break;
         }
         else {
-            drawPoint(buffer, lineA[1], i, 0, 0, 0, 255);
+            drawPoint(buffer, lineA[1], i, 255, 255, 255, 255);
         }
     }
 }
 
 function drawPointWithCheck(buffer: ImageData, row: number, col: number, r: number, g: number, b: number, a: number) {
     if (row >= 0 && row < buffer.height && col >= 0 && col < buffer.width) {
-        drawPoint(buffer, row, col, 0, 0, 0, 255)
+        drawPoint(buffer, row, col, r, g, b, a)
     }
 }
 
