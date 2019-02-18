@@ -11,6 +11,8 @@ export class MainView {
         this.gl.clearColor(0, 0, 0, 1);
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(GLBufferType.ARRAY_BUFFER, this.buffer);
+        // let vertice = new Float32Array([0, 0, 0, 0, 0, 0]);
+        // let vertice = new Float32Array([0, -1, -1, 0, -0.5, -0.5]);
         let vertice = new Float32Array([0, -1, -1, 0, 1, 1]);
         this.gl.bufferData(GLBufferType.ARRAY_BUFFER, vertice);
         this.gl.vertexAttribPointer("pos", 2, GLTypeType.FLOAT, false, 8, 0);
@@ -20,7 +22,8 @@ export class MainView {
     }
     render() {
         this.gl.clear(GLClearType.COLOR_BUFFER_BIT);
-        this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
+        this.gl.uniformnv("offset", [0, 0])
+        // this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
         this.gl.drawArrays(GLPrimitiveType.TRIANGLES, 0, 3);
         this.renderID = requestAnimationFrame(this.render.bind(this));
     }

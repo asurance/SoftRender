@@ -129,8 +129,8 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             }
         }
         transformToScreen(position) {
-            position[0] = Math.round((position[0] + 1) / 2 * this._Viewport[2] + this._Viewport[0]);
-            position[1] = Math.round((position[1] + 1) / 2 * this._Viewport[3] + this._Viewport[1]);
+            position[0] = (position[0] + 1) / 2 * this._Viewport[2] + this._Viewport[0];
+            position[1] = (position[1] + 1) / 2 * this._Viewport[3] + this._Viewport[1];
         }
     }
     exports.GLContext = GLContext;
@@ -201,29 +201,31 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
                 }
             }
             let midi = 3 - maxi - mini;
-            let mid = interpolationRoundedByIndex(vertex[mini], vertex[maxi], 1, vertex[midi][1]);
+            let mid = interpolationByIndex(vertex[mini], vertex[maxi], 1, vertex[midi][1]);
             drawHorizenTriangle(buffer, vertex[mini], vertex[midi], mid);
             drawHorizenTriangle(buffer, vertex[maxi], vertex[midi], mid);
         }
     }
     function drawHorizenTriangle(buffer, point, edgeA, edgeB) {
-        drawPointWithCheck(buffer, point[1], point[0], 255, 255, 255, 255);
+        let pointy = Math.round(point[1]);
+        let liney = Math.round(edgeA[1]);
+        drawPointWithCheck(buffer, pointy, Math.round(point[0]), 255, 255, 255, 255);
         let start;
         let end;
-        if (point[1] < edgeA[1]) {
-            start = point[1] + 1;
-            end = edgeA[1];
+        if (pointy < liney) {
+            start = pointy + 1;
+            end = liney;
         }
         else {
-            start = edgeA[1];
-            end = point[1] - 1;
+            start = liney;
+            end = pointy - 1;
         }
         for (let i = Math.max(start, 0); i < end; i++) {
             if (i >= buffer.height) {
                 break;
             }
             else {
-                drawHorizenLine(buffer, interpolationRoundedByIndex(point, edgeA, 1, i), interpolationRoundedByIndex(point, edgeB, 1, i));
+                drawHorizenLine(buffer, interpolationByIndex(point, edgeA, 1, i), interpolationByIndex(point, edgeB, 1, i));
             }
         }
     }
@@ -238,7 +240,9 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             start = lineB[0];
             end = lineA[0];
         }
-        for (let i = Math.max(start, 0); i < end; i++) {
+        let left = Math.round(start);
+        let right = Math.round(end);
+        for (let i = Math.max(left, 0); i < right + 1; i++) {
             if (i >= buffer.width) {
                 break;
             }
