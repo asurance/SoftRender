@@ -13,28 +13,29 @@ export class MainView {
         this.gl.bindBuffer(GLBufferType.ARRAY_BUFFER, this.buffer);
         // let vertice = new Float32Array([0, 0, 0, 0, 0, 0]);
         // let vertice = new Float32Array([0, -1, -1, 0, -0.5, -0.5]);
-        let vertice = new Float32Array([0, -1, -1, 0, 1, 1]);
+        let vertice = new Float32Array([0, -1, 1, 0, 0, -1, 0, 0, 1, 0, 1, 0, 0, 0, 1]);
         this.gl.bufferData(GLBufferType.ARRAY_BUFFER, vertice);
-        this.gl.vertexAttribPointer("pos", 2, GLTypeType.FLOAT, false, 8, 0);
+        this.gl.vertexAttribPointer("pos", 2, GLTypeType.FLOAT, false, 20, 0);
+        this.gl.vertexAttribPointer("color", 3, GLTypeType.FLOAT, false, 20, 8);
         let program = this.gl.createProgram(defaultVertexShader, defaultFragmentShader);
         this.gl.useProgram(program);
         this.renderID = requestAnimationFrame(this.render.bind(this));
     }
     render() {
         this.gl.clear(GLClearType.COLOR_BUFFER_BIT);
-        // this.gl.uniformnv("offset", [0, 0])
-        this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
+        this.gl.uniformnv("offset", [0, 0])
+        // this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
         this.gl.drawArrays(GLPrimitiveType.TRIANGLES, 0, 3);
         this.renderID = requestAnimationFrame(this.render.bind(this));
     }
 }
 
-function defaultVertexShader(input: { pos: number[] }, uniform: { offset: number[] }) {
+function defaultVertexShader(input: { pos: number[], color: number[] }, uniform: { offset: number[] }) {
     let x = input.pos[0] + uniform.offset[0];
     let y = input.pos[1] + uniform.offset[1];
-    return { position: [x, y, input.pos[2], input.pos[3]], varying: { pos: [(x + 1) / 2, (y + 1) / 2] } };
+    return { position: [x, y, input.pos[2], input.pos[3]], varying: { color: [input.color[0], input.color[1], input.color[2]] } };
 }
 
-function defaultFragmentShader(uniform: any, varying: { pos: number[] }) {
-    return [varying.pos[0], varying.pos[1], 0, 1];
+function defaultFragmentShader(uniform: any, varying: { color: number[] }) {
+    return [varying.color[0], varying.color[1], varying.color[2], 1];
 }

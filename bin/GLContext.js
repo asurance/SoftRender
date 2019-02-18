@@ -129,11 +129,9 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
                     });
                     traingle.forEach(this.transformToScreen.bind(this));
                     this.curSABC = SFunction(this.curABC[0].position, this.curABC[1].position, this.curABC[2].position);
-                    if (this.curSABC == 0) {
-                        console.log("In valid SABC");
-                        continue;
+                    if (this.curSABC != 0) {
+                        this.drawTriangle(this.renderFrameBuffer.buffer, traingle);
                     }
-                    this.drawTriangle(this.renderFrameBuffer.buffer, traingle);
                 }
             }
             else {
