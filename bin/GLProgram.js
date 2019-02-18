@@ -6,10 +6,12 @@ define(["require", "exports"], function (require, exports) {
             this.VertexShader = vertexShader;
             this.FragmentShader = fragmentShader;
             this.uniform = {};
-            this.varying = {};
         }
-        GetPositonByVertexShader(vertex) {
-            return this.VertexShader(vertex, this.uniform, this.varying);
+        GetVertexByVertexShader(vertex) {
+            return this.VertexShader(vertex, this.uniform);
+        }
+        GetColorByFragmentShader(varying) {
+            return this.FragmentShader(this.uniform, varying);
         }
     }
     exports.GLProgram = GLProgram;

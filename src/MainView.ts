@@ -22,20 +22,19 @@ export class MainView {
     }
     render() {
         this.gl.clear(GLClearType.COLOR_BUFFER_BIT);
-        this.gl.uniformnv("offset", [0, 0])
-        // this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
+        // this.gl.uniformnv("offset", [0, 0])
+        this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
         this.gl.drawArrays(GLPrimitiveType.TRIANGLES, 0, 3);
         this.renderID = requestAnimationFrame(this.render.bind(this));
     }
 }
 
-function defaultVertexShader(input: { pos: number[] }, uniform: { offset: number[] }, varying: { pos: number[] }) {
+function defaultVertexShader(input: { pos: number[] }, uniform: { offset: number[] }) {
     let x = input.pos[0] + uniform.offset[0];
     let y = input.pos[1] + uniform.offset[1];
-    varying.pos = [x, y];
-    return [x, y, input.pos[2], input.pos[3]];
+    return { position: [x, y, input.pos[2], input.pos[3]], varying: { pos: [(x + 1) / 2, (y + 1) / 2] } };
 }
 
 function defaultFragmentShader(uniform: any, varying: { pos: number[] }) {
-    return [(varying.pos[0] + 1) / 2, (varying.pos[1] + 1) / 2, 0, 1]
+    return [varying.pos[0], varying.pos[1], 0, 1];
 }

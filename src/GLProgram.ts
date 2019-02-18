@@ -1,16 +1,19 @@
+export type vertex = { position: number[], varying?: any };
 export class GLProgram {
     uniform: any;
-    private varying: any;
-    private VertexShader: (input: any, uniform: any, varying: any) => number[];
+    private VertexShader: (input: any, uniform: any) => vertex;
     private FragmentShader: (uniform: any, varying: any) => number[];
-    constructor(vertexShader: (input: any, uniform: any, varying: any) => number[], fragmentShader: (uniform: any, varying: any) => number[]) {
+    constructor(vertexShader: (input: any, uniform: any) => vertex, fragmentShader: (uniform: any, varying: any) => number[]) {
         this.VertexShader = vertexShader;
         this.FragmentShader = fragmentShader;
         this.uniform = {};
-        this.varying = {};
     }
 
-    GetPositonByVertexShader(vertex: any) {
-        return this.VertexShader(vertex, this.uniform, this.varying);
+    GetVertexByVertexShader(vertex: any) {
+        return this.VertexShader(vertex, this.uniform);
+    }
+
+    GetColorByFragmentShader(varying?: any) {
+        return this.FragmentShader(this.uniform, varying);
     }
 }

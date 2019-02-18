@@ -9,6 +9,8 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             this.elementArrayBuffer = null;
             this.program = null;
             this.renderFrameBuffer = new GLRenderBuffer_1.GLRenderBuffer(context);
+            this.curABC = [];
+            this.curSABC = 0;
         }
         /**Viewing and clipping */
         viewport(x, y, width, height) {
@@ -117,11 +119,21 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
                     let vertice = this.arrayBuffer.GetData(first, 3);
                     first += 3;
                     count -= 3;
-                    let traingle = vertice.map((vertex) => {
-                        return this.program.GetPositonByVertexShader(vertex);
+                    let vert = vertice.map((vertex, i) => {
+                        let info = this.program.GetVertexByVertexShader(vertex);
+                        this.curABC[i] = info;
+                        return info;
+                    });
+                    let traingle = vert.map((vertex) => {
+                        return vertex.position;
                     });
                     traingle.forEach(this.transformToScreen.bind(this));
-                    drawTriangle(this.renderFrameBuffer.buffer, traingle);
+                    this.curSABC = SFunction(this.curABC[0].position, this.curABC[1].position, this.curABC[2].position);
+                    if (this.curSABC == 0) {
+                        console.log("In valid SABC");
+                        continue;
+                    }
+                    this.drawTriangle(this.renderFrameBuffer.buffer, traingle);
                 }
             }
             else {
@@ -131,6 +143,113 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
         transformToScreen(position) {
             position[0] = (position[0] + 1) / 2 * this._Viewport[2] + this._Viewport[0];
             position[1] = (position[1] + 1) / 2 * this._Viewport[3] + this._Viewport[1];
+        }
+        drawTriangle(buffer, vertex) {
+            let flag = true;
+            for (let i = 0; i < 3; i++) {
+                if (vertex[i][1] == vertex[(i + 1) % 3][1]) {
+                    this.drawHorizenTriangle(buffer, vertex[(i + 2) % 3], vertex[i], vertex[(i + 1) % 3]);
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                let max = vertex[0][1];
+                let maxi = 0;
+                let min = vertex[0][1];
+                let mini = 0;
+                for (let i = 1; i < 3; i++) {
+                    if (max < vertex[i][1]) {
+                        max = vertex[i][1];
+                        maxi = i;
+                    }
+                    if (min > vertex[i][1]) {
+                        min = vertex[i][1];
+                        mini = i;
+                    }
+                }
+                let midi = 3 - maxi - mini;
+                let mid = interpolationByIndex(vertex[mini], vertex[maxi], 1, vertex[midi][1]);
+                this.drawHorizenTriangle(buffer, vertex[mini], vertex[midi], mid);
+                this.drawHorizenTriangle(buffer, vertex[maxi], vertex[midi], mid);
+            }
+        }
+        drawHorizenTriangle(buffer, point, edgeA, edgeB) {
+            let pointy = Math.round(point[1]);
+            let liney = Math.round(edgeA[1]);
+            this.drawPointWithCheck(buffer, pointy, Math.round(point[0]), 255, 255, 255, 255);
+            let start;
+            let end;
+            if (pointy < liney) {
+                start = pointy + 1;
+                end = liney;
+            }
+            else {
+                start = liney;
+                end = pointy - 1;
+            }
+            for (let i = Math.max(start, 0); i < end; i++) {
+                if (i >= buffer.height) {
+                    break;
+                }
+                else {
+                    this.drawHorizenLine(buffer, interpolationByIndex(point, edgeA, 1, i), interpolationByIndex(point, edgeB, 1, i));
+                }
+            }
+        }
+        drawHorizenLine(buffer, lineA, lineB) {
+            let start;
+            let end;
+            if (lineA[0] < lineB[0]) {
+                start = lineA[0];
+                end = lineB[0];
+            }
+            else {
+                start = lineB[0];
+                end = lineA[0];
+            }
+            let left = Math.round(start);
+            let right = Math.round(end);
+            for (let i = Math.max(left, 0); i < right + 1; i++) {
+                if (i >= buffer.width) {
+                    break;
+                }
+                else {
+                    this.drawPoint(buffer, lineA[1], i, 255, 255, 255, 255);
+                }
+            }
+        }
+        drawPointWithCheck(buffer, row, col, r, g, b, a) {
+            if (row >= 0 && row < buffer.height && col >= 0 && col < buffer.width) {
+                this.drawPoint(buffer, row, col, r, g, b, a);
+            }
+        }
+        drawPoint(buffer, row, col, r, g, b, a) {
+            let varying = {};
+            let ratio0 = SFunction([col, row], this.curABC[1].position, this.curABC[2].position) / this.curSABC;
+            let ratio1 = SFunction(this.curABC[0].position, [col, row], this.curABC[2].position) / this.curSABC;
+            let ratio2 = SFunction(this.curABC[0].position, this.curABC[1].position, [col, row]) / this.curSABC;
+            for (let key in this.curABC[0].varying) {
+                let val = this.curABC[0].varying[key];
+                if (typeof val == 'number') {
+                    varying[key] = ratio0 * val + ratio1 * this.curABC[1].varying[key] + ratio2 * this.curABC[2].varying[key];
+                }
+                else if (val instanceof Array) {
+                    let length = val.length;
+                    varying[key] = new Array(length);
+                    for (let i = 0; i < length; i++) {
+                        varying[key][i] = ratio0 * val[i] + ratio1 * this.curABC[1].varying[key][i] + ratio2 * this.curABC[2].varying[key][i];
+                    }
+                }
+                else {
+                    throw Error("varing中存在错误参数");
+                }
+            }
+            let data = this.program.GetColorByFragmentShader(varying);
+            buffer.data[(row * buffer.width + col) * 4] = data[0] * 255 | 0;
+            buffer.data[(row * buffer.width + col) * 4 + 1] = data[1] * 255 | 0;
+            buffer.data[(row * buffer.width + col) * 4 + 2] = data[2] * 255 | 0;
+            buffer.data[(row * buffer.width + col) * 4 + 3] = data[3] * 255 | 0;
         }
     }
     exports.GLContext = GLContext;
@@ -176,91 +295,8 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
         }
         return res;
     }
-    function drawTriangle(buffer, vertex) {
-        let flag = true;
-        for (let i = 0; i < 3; i++) {
-            if (vertex[i][1] == vertex[(i + 1) % 3][1]) {
-                drawHorizenTriangle(buffer, vertex[(i + 2) % 3], vertex[i], vertex[(i + 1) % 3]);
-                flag = false;
-                break;
-            }
-        }
-        if (flag) {
-            let max = vertex[0][1];
-            let maxi = 0;
-            let min = vertex[0][1];
-            let mini = 0;
-            for (let i = 1; i < 3; i++) {
-                if (max < vertex[i][1]) {
-                    max = vertex[i][1];
-                    maxi = i;
-                }
-                if (min > vertex[i][1]) {
-                    min = vertex[i][1];
-                    mini = i;
-                }
-            }
-            let midi = 3 - maxi - mini;
-            let mid = interpolationByIndex(vertex[mini], vertex[maxi], 1, vertex[midi][1]);
-            drawHorizenTriangle(buffer, vertex[mini], vertex[midi], mid);
-            drawHorizenTriangle(buffer, vertex[maxi], vertex[midi], mid);
-        }
-    }
-    function drawHorizenTriangle(buffer, point, edgeA, edgeB) {
-        let pointy = Math.round(point[1]);
-        let liney = Math.round(edgeA[1]);
-        drawPointWithCheck(buffer, pointy, Math.round(point[0]), 255, 255, 255, 255);
-        let start;
-        let end;
-        if (pointy < liney) {
-            start = pointy + 1;
-            end = liney;
-        }
-        else {
-            start = liney;
-            end = pointy - 1;
-        }
-        for (let i = Math.max(start, 0); i < end; i++) {
-            if (i >= buffer.height) {
-                break;
-            }
-            else {
-                drawHorizenLine(buffer, interpolationByIndex(point, edgeA, 1, i), interpolationByIndex(point, edgeB, 1, i));
-            }
-        }
-    }
-    function drawHorizenLine(buffer, lineA, lineB) {
-        let start;
-        let end;
-        if (lineA[0] < lineB[0]) {
-            start = lineA[0];
-            end = lineB[0];
-        }
-        else {
-            start = lineB[0];
-            end = lineA[0];
-        }
-        let left = Math.round(start);
-        let right = Math.round(end);
-        for (let i = Math.max(left, 0); i < right + 1; i++) {
-            if (i >= buffer.width) {
-                break;
-            }
-            else {
-                drawPoint(buffer, lineA[1], i, 255, 255, 255, 255);
-            }
-        }
-    }
-    function drawPointWithCheck(buffer, row, col, r, g, b, a) {
-        if (row >= 0 && row < buffer.height && col >= 0 && col < buffer.width) {
-            drawPoint(buffer, row, col, r, g, b, a);
-        }
-    }
-    function drawPoint(buffer, row, col, r, g, b, a) {
-        buffer.data[(row * buffer.width + col) * 4] = r;
-        buffer.data[(row * buffer.width + col) * 4 + 1] = g;
-        buffer.data[(row * buffer.width + col) * 4 + 2] = b;
-        buffer.data[(row * buffer.width + col) * 4 + 3] = a;
+    function SFunction(A, B, C) {
+        return A[0] * B[1] + B[0] * C[1] + C[0] * A[1] - A[0] * C[1] - B[0] * A[1] - C[0] * B[1];
     }
 });
 //# sourceMappingURL=GLContext.js.map
