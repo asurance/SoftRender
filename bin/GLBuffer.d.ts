@@ -6,16 +6,16 @@ export declare class GLBuffer {
     };
     constructor();
     SetData(srcData: number | ArrayBuffer | ArrayBufferView): void;
-    SetAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number): void;
+    SetAttribPointer(key: string, size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number): void;
     GetData(first: number, count: number): any[];
     Dispose(): void;
 }
 declare class GLBufferLayout {
-    size: 1 | 2 | 3 | 4;
+    size: number;
     type: GLTypeType;
     normalized: boolean;
     stride: number;
     offset: number;
-    constructor(size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number);
+    constructor(size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number);
 }
 export {};

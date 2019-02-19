@@ -28,7 +28,7 @@ export declare class GLContext {
     useProgram(program: GLProgram): void;
     /**Uniforms and attributes */
     uniformnv(key: string, value: number[]): void;
-    vertexAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number): void;
+    vertexAttribPointer(key: string, size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number): void;
     /**Drawing buffers */
     clear(mask: number): void;
     drawArrays(mode: GLPrimitiveType, first: number, count: number): void;

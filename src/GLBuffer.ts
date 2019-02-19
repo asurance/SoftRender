@@ -17,7 +17,7 @@ export class GLBuffer {
             this.data = srcData.buffer;
         }
     }
-    SetAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
+    SetAttribPointer(key: string, size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
         if (this.layout[key]) {
             this.layout[key].size = size;
             this.layout[key].type = type;
@@ -47,12 +47,12 @@ export class GLBuffer {
 }
 
 class GLBufferLayout {
-    size: 1 | 2 | 3 | 4;
+    size: number;
     type: GLTypeType;
     normalized: boolean;
     stride: number;
     offset: number
-    constructor(size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
+    constructor(size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
         this.size = size;
         this.type = type;
         this.normalized = normalized;

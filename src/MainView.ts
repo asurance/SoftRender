@@ -23,17 +23,18 @@ export class MainView {
     }
     render() {
         this.gl.clear(GLClearType.COLOR_BUFFER_BIT);
-        this.gl.uniformnv("offset", [0, 0])
+        this.gl.uniformnv("rotation", [this.renderID / 100]);
         // this.gl.uniformnv("offset", [Math.sin(this.renderID / 100) / 2 + 0.5, 0])
         this.gl.drawArrays(GLPrimitiveType.TRIANGLES, 0, 3);
         this.renderID = requestAnimationFrame(this.render.bind(this));
     }
 }
 
-function defaultVertexShader(input: { pos: number[], color: number[] }, uniform: { offset: number[] }) {
-    let x = input.pos[0] + uniform.offset[0];
-    let y = input.pos[1] + uniform.offset[1];
-    return { position: [x, y, input.pos[2], input.pos[3]], varying: { color: [input.color[0], input.color[1], input.color[2]] } };
+function defaultVertexShader(input: { pos: number[], color: number[] }, uniform: { rotation: number[] }) {
+    let ratio = Math.sin(uniform.rotation[0]);
+    let ratioC = (ratio + 1) / 2;
+    let color = [input.color[0] * ratioC, input.color[1] * ratioC, input.color[2] * ratioC];
+    return { position: [input.pos[0] * ratio, input.pos[1], input.pos[2], input.pos[3]], varying: { color: color } };
 }
 
 function defaultFragmentShader(uniform: any, varying: { color: number[] }) {

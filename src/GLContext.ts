@@ -90,7 +90,7 @@ export class GLContext {
             this.program!.uniform[key] = value.concat();
         }
     }
-    vertexAttribPointer(key: string, size: 1 | 2 | 3 | 4, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
+    vertexAttribPointer(key: string, size: number, type: GLTypeType, normalized: boolean, stride: number, offset: number) {
         if (normalized) {
             throw Error("NOT_IMPLEMENT");
         }
@@ -139,7 +139,7 @@ export class GLContext {
                 })
                 traingle.forEach(this.transformToScreen.bind(this));
                 this.curSABC = SFunction(this.curABC[0].position, this.curABC[1].position, this.curABC[2].position);
-                if (this.curSABC != 0) {
+                if (this.curSABC < 0) {
                     this.drawTriangle(this.renderFrameBuffer.buffer!, traingle);
                 }
             }
