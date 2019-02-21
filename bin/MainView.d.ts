@@ -3,5 +3,6 @@ export declare class MainView {
     private gl;
     private buffer;
     constructor(ctx: CanvasRenderingContext2D);
+    private loadImg;
     render(): void;
 }

@@ -10,6 +10,7 @@ function main() {
     else {
         canvas.width = 400;
         canvas.height = 300;
+        ctx.imageSmoothingEnabled = false;
         document.body.appendChild(canvas);
         new MainView(ctx);
     }

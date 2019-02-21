@@ -1,4 +1,4 @@
-define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], function (require, exports, GLBuffer_1, GLRenderBuffer_1, GLProgram_1) {
+define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram", "./GLTexture"], function (require, exports, GLBuffer_1, GLRenderBuffer_1, GLProgram_1, GLTexture_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class GLContext {
@@ -11,6 +11,8 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             this.renderFrameBuffer = new GLRenderBuffer_1.GLRenderBuffer(context);
             this.curABC = [];
             this.curSABC = 0;
+            this.activeTextures = [];
+            this.curActiveID = 0;
         }
         /**Viewing and clipping */
         viewport(x, y, width, height) {
@@ -26,6 +28,9 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             this._Viewport[3] = height;
         }
         /**State information */
+        activeTexture(texture) {
+            this.curActiveID = texture;
+        }
         clearColor(red, green, blue, alpha) {
             this._ClearColor[0] = red * 255;
             this._ClearColor[1] = green * 255;
@@ -57,6 +62,21 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
         /**Renderbuffers */
         createRenderbuffer() {
             return new GLRenderBuffer_1.GLRenderBuffer();
+        }
+        /**Textures */
+        createTexture() {
+            return new GLTexture_1.GLTexture();
+        }
+        bindTexture(target, texture) {
+            this.activeTextures[this.curActiveID] = texture;
+        }
+        texImage2D(target, level, internalformat, format, type, pixels) {
+            let cav = document.createElement('canvas');
+            cav.width = pixels.width;
+            cav.height = pixels.height;
+            let ctx = cav.getContext('2d');
+            ctx.drawImage(pixels, 0, 0);
+            this.activeTextures[this.curActiveID].data = ctx.getImageData(0, 0, pixels.width, pixels.height);
         }
         /**Programs and shaders */
         createProgram(vertexShader, fragmentShader) {
@@ -95,7 +115,7 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
         }
         /**Drawing buffers */
         clear(mask) {
-            if (mask & (~(16384 /* COLOR_BUFFER_BIT */ | 256 /* DEPTH_BUFFER_BIT */ | 1024 /* STENCIL_BUFFER_BIT */))) {
+            if (mask & (~(16384 /* COLOR_BUFFER_BIT */ | 256 /* DEPTH_BUFFER_BIT */))) {
                 throw Error("mask的中存在非法位");
             }
             if (mask & 16384 /* COLOR_BUFFER_BIT */) {
@@ -109,33 +129,25 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
             if (mask & 256 /* DEPTH_BUFFER_BIT */) {
                 throw Error("NOT_IMPLEMENT");
             }
-            if (mask & 1024 /* STENCIL_BUFFER_BIT */) {
-                throw Error("NOT_IMPLEMENT");
-            }
         }
         drawArrays(mode, first, count) {
-            if (mode == 4 /* TRIANGLES */) {
-                while (count > 2) {
-                    let vertice = this.arrayBuffer.GetData(first, 3);
-                    first += 3;
-                    count -= 3;
-                    let vert = vertice.map((vertex, i) => {
-                        let info = this.program.GetVertexByVertexShader(vertex);
-                        this.curABC[i] = info;
-                        return info;
-                    });
-                    let traingle = vert.map((vertex) => {
-                        return vertex.position;
-                    });
-                    traingle.forEach(this.transformToScreen.bind(this));
-                    this.curSABC = SFunction(this.curABC[0].position, this.curABC[1].position, this.curABC[2].position);
-                    if (this.curSABC < 0) {
-                        this.drawTriangle(this.renderFrameBuffer.buffer, traingle);
-                    }
+            while (count > 2) {
+                let vertice = this.arrayBuffer.GetData(first, 3);
+                first += 3;
+                count -= 3;
+                let vert = vertice.map((vertex, i) => {
+                    let info = this.program.GetVertexByVertexShader(vertex);
+                    this.curABC[i] = info;
+                    return info;
+                });
+                let traingle = vert.map((vertex) => {
+                    return vertex.position;
+                });
+                traingle.forEach(this.transformToScreen.bind(this));
+                this.curSABC = SFunction(this.curABC[0].position, this.curABC[1].position, this.curABC[2].position);
+                if (this.curSABC < 0) {
+                    this.drawTriangle(this.renderFrameBuffer.buffer, traingle);
                 }
-            }
-            else {
-                throw Error("NOT_IMPLEMENT");
             }
         }
         transformToScreen(position) {
@@ -243,7 +255,7 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram"], 
                     throw Error("varing中存在错误参数");
                 }
             }
-            let data = this.program.GetColorByFragmentShader(varying);
+            let data = this.program.GetColorByFragmentShader(varying, this.activeTextures);
             buffer.data[(row * buffer.width + col) * 4] = data[0] * 255 | 0;
             buffer.data[(row * buffer.width + col) * 4 + 1] = data[1] * 255 | 0;
             buffer.data[(row * buffer.width + col) * 4 + 2] = data[2] * 255 | 0;

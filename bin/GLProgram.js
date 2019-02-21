@@ -10,8 +10,8 @@ define(["require", "exports"], function (require, exports) {
         GetVertexByVertexShader(vertex) {
             return this.VertexShader(vertex, this.uniform);
         }
-        GetColorByFragmentShader(varying) {
-            return this.FragmentShader(this.uniform, varying);
+        GetColorByFragmentShader(varying, sampler) {
+            return this.FragmentShader(this.uniform, varying, sampler);
         }
     }
     exports.GLProgram = GLProgram;

@@ -1,7 +1,5 @@
 export declare const enum GLClearType {
-    /**Clearing buffers */
     DEPTH_BUFFER_BIT = 256,
-    STENCIL_BUFFER_BIT = 1024,
     COLOR_BUFFER_BIT = 16384
 }
 export declare const enum GLBufferType {
@@ -18,11 +16,11 @@ export declare const enum GLTypeType {
     FLOAT = 5126
 }
 export declare const enum GLPrimitiveType {
-    POINTS = 0,
-    LINES = 1,
-    LINE_LOOP = 2,
-    LINE_STRIP = 3,
-    TRIANGLES = 4,
-    TRIANGLE_STRIP = 5,
-    TRIANGLE_FAN = 6
+    TRIANGLES = 4
+}
+export declare const enum GLTextureType {
+    TEXTURE_2D = 3553
+}
+export declare const enum GLTexturePixelType {
+    RGBA8 = 32856
 }

@@ -1,25 +1,34 @@
 import { GLContext } from "./GLContext";
 import { GLBuffer } from "./GLBuffer";
-import { GLBufferType, GLTypeType, GLClearType, GLPrimitiveType } from "./GLConstants";
+import { GLBufferType, GLTypeType, GLClearType, GLPrimitiveType, GLTextureType, GLTexturePixelType } from "./GLConstants";
+import { GLTexture } from "./GLTexture";
 
 export class MainView {
-    private renderID: number;
+    private renderID: number = 0;
     private gl: GLContext;
     private buffer: GLBuffer;
     constructor(ctx: CanvasRenderingContext2D) {
         this.gl = new GLContext(ctx);
+        let texture = this.gl.createTexture();
+        this.gl.bindTexture(GLTextureType.TEXTURE_2D, texture);
+        this.loadImg();
         this.gl.clearColor(0, 0, 0, 1);
         this.buffer = this.gl.createBuffer();
         this.gl.bindBuffer(GLBufferType.ARRAY_BUFFER, this.buffer);
         // let vertice = new Float32Array([0, 0, 0, 0, 0, 0]);
         // let vertice = new Float32Array([0, -1, -1, 0, -0.5, -0.5]);
-        let vertice = new Float32Array([0, -1, 1, 0, 0, -1, 0, 0, 1, 0, 1, 0, 0, 0, 1]);
+        let vertice = new Float32Array([0, -1, -1, 0, 1, 0]);
         this.gl.bufferData(GLBufferType.ARRAY_BUFFER, vertice);
-        this.gl.vertexAttribPointer("pos", 2, GLTypeType.FLOAT, false, 20, 0);
-        this.gl.vertexAttribPointer("color", 3, GLTypeType.FLOAT, false, 20, 8);
+        this.gl.vertexAttribPointer("pos", 2, GLTypeType.FLOAT, false, 8, 0);
         let program = this.gl.createProgram(defaultVertexShader, defaultFragmentShader);
         this.gl.useProgram(program);
-        this.renderID = requestAnimationFrame(this.render.bind(this));
+        setTimeout(() => {
+            this.renderID = requestAnimationFrame(this.render.bind(this));
+        }, 1000);
+    }
+    private async loadImg() {
+        let img = await LoadImage('Smile.png');
+        this.gl.texImage2D(GLTextureType.TEXTURE_2D, 0, GLTexturePixelType.RGBA8, GLTexturePixelType.RGBA8, GLTypeType.UNSIGNED_BYTE, img);
     }
     render() {
         this.gl.clear(GLClearType.COLOR_BUFFER_BIT);
@@ -30,13 +39,23 @@ export class MainView {
     }
 }
 
-function defaultVertexShader(input: { pos: number[], color: number[] }, uniform: { rotation: number[] }) {
+function defaultVertexShader(input: { pos: number[] }, uniform: { rotation: number[] }) {
     let ratio = Math.sin(uniform.rotation[0]);
-    let ratioC = (ratio + 1) / 2;
-    let color = [input.color[0] * ratioC, input.color[1] * ratioC, input.color[2] * ratioC];
-    return { position: [input.pos[0] * ratio, input.pos[1], input.pos[2], input.pos[3]], varying: { color: color } };
+    let x = input.pos[0] + ratio;
+    let y = input.pos[1];
+    return { position: [input.pos[0] + ratio, input.pos[1], input.pos[2], input.pos[3]], varying: { pos: [x, y] } };
 }
 
-function defaultFragmentShader(uniform: any, varying: { color: number[] }) {
-    return [varying.color[0], varying.color[1], varying.color[2], 1];
+function defaultFragmentShader(uniform: any, varying: { pos: number[] }, sampler?: GLTexture[]) {
+    return sampler![0].texture2D(varying.pos);
+}
+
+function LoadImage(path: string) {
+    return new Promise<HTMLImageElement>((resolve) => {
+        let img = new Image();
+        img.onload = () => {
+            resolve(img);
+        }
+        img.src = path;
+    })
 }

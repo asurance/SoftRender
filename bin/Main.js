@@ -11,6 +11,7 @@ define(["require", "exports", "./MainView"], function (require, exports, MainVie
         else {
             canvas.width = 400;
             canvas.height = 300;
+            ctx.imageSmoothingEnabled = false;
             document.body.appendChild(canvas);
             new MainView_1.MainView(ctx);
         }
