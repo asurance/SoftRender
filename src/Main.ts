@@ -8,8 +8,8 @@ function main() {
         document.write('您的浏览器不支持canvas 2d 渲染,建议更换浏览器');
     }
     else {
-        canvas.width = 400;
-        canvas.height = 300;
+        canvas.width = 128;
+        canvas.height = 128;
         ctx.imageSmoothingEnabled = false;
         document.body.appendChild(canvas);
         new MainView(ctx);

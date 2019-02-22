@@ -236,9 +236,9 @@ define(["require", "exports", "./GLBuffer", "./GLRenderBuffer", "./GLProgram", "
         }
         drawPoint(buffer, row, col, r, g, b, a) {
             let varying = {};
-            let ratio0 = SFunction([col, row], this.curABC[1].position, this.curABC[2].position) / this.curSABC;
-            let ratio1 = SFunction(this.curABC[0].position, [col, row], this.curABC[2].position) / this.curSABC;
-            let ratio2 = SFunction(this.curABC[0].position, this.curABC[1].position, [col, row]) / this.curSABC;
+            let ratio0 = SFunction([col + 0.5, row + 0.5], this.curABC[1].position, this.curABC[2].position) / this.curSABC;
+            let ratio1 = SFunction(this.curABC[0].position, [col + 0.5, row + 0.5], this.curABC[2].position) / this.curSABC;
+            let ratio2 = SFunction(this.curABC[0].position, this.curABC[1].position, [col + 0.5, row + 0.5]) / this.curSABC;
             for (let key in this.curABC[0].varying) {
                 let val = this.curABC[0].varying[key];
                 if (typeof val == 'number') {
