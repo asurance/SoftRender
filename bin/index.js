@@ -5,10 +5,12 @@ define(["require", "exports", "./GL"], function (require, exports, GL_1) {
         const canvas = document.createElement('canvas');
         document.body.appendChild(canvas);
         try {
-            let gl = new GL_1.GL(canvas);
+            let gl = new GL_1.XGLRenderingContext(canvas);
+            gl.clearColor(0, 0, 1, 1);
+            gl.clear(1);
         }
         catch (error) {
-            console.log(error);
+            alert(error);
         }
     }
     main();

@@ -1,4 +1,7 @@
-export class GLContext {
+import { GLBuffer } from "./GLBuffer";
+
+/**XGL库绘制上下文 */
+export class XGLRenderingContext {
     readonly canvas: HTMLCanvasElement;
     readonly drawingBufferHeight: number;
     readonly drawingBufferWidth: number;
@@ -17,19 +20,45 @@ export class GLContext {
             this.context = context;
         }
         this.canvas = canvas;
+        this.screenBuffer = context.getImageData(0, 0, canvas.width, canvas.height);
         this.drawingBufferWidth = canvas.width;
         this.drawingBufferHeight = canvas.height;
-        let settingBuffer = new ArrayBuffer(GLSettings.SettingLength);
+        let settingBuffer = new ArrayBuffer(XGLSettings.SettingLength);
         this.settings = new DataView(settingBuffer);
+        requestAnimationFrame(this.refreshScreen.bind(this));
     }
-    createBuffer(): GLBuffer {
+    createBuffer(): XGLBuffer {
         return { data: undefined, layouts: undefined };
     }
     clearColor(red: number, green: number, blue: number, alpha: number) {
-        this.settings.setUint8(GLSettings.ClearColorRed, Math.round(clampTo01(red) * 255));
-        this.settings.setUint8(GLSettings.ClearColorGreen, Math.round(clampTo01(green) * 255));
-        this.settings.setUint8(GLSettings.ClearColorBlue, Math.round(clampTo01(blue) * 255));
-        this.settings.setUint8(GLSettings.ClearColorAlpha, Math.round(clampTo01(alpha) * 255));
+        this.settings.setUint8(XGLSettings.ClearColorRed, Math.round(clampTo01(red) * 255));
+        this.settings.setUint8(XGLSettings.ClearColorGreen, Math.round(clampTo01(green) * 255));
+        this.settings.setUint8(XGLSettings.ClearColorBlue, Math.round(clampTo01(blue) * 255));
+        this.settings.setUint8(XGLSettings.ClearColorAlpha, Math.round(clampTo01(alpha) * 255));
+    }
+    viewport(x: number, y: number, width: number, height: number) {
+        if (width <= 0) {
+            throw "viewport的宽度须为正数";
+        }
+        if (height <= 0) {
+            throw "viewport的高度须为整数";
+        }
+        this.settings.setFloat32(XGLSettings.ViewPortX, x);
+        this.settings.setFloat32(XGLSettings.ViewPortY, y);
+        this.settings.setFloat32(XGLSettings.ViewPortWidth, width);
+        this.settings.setFloat32(XGLSettings.ViewPortHeight, height);
+    }
+    clear(mask: number) {
+        let rgba = new Uint8ClampedArray(this.settings.buffer, XGLSettings.ClearColorRed, 4);
+        for (let row = 0; row < this.drawingBufferHeight; row++) {
+            for (let col = 0; col < this.drawingBufferWidth; col++) {
+                this.screenBuffer.data.set(rgba, (row * this.drawingBufferWidth + col) << 2);
+                // this.screenBuffer.data[(row * this.drawingBufferWidth + col) << 2] = this.settings.getUint8(XGLSettings.ClearColorRed);
+                // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 1] = this.settings.getUint8(XGLSettings.ClearColorGreen);
+                // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 2] = this.settings.getUint8(XGLSettings.ClearColorBlue);
+                // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 3] = this.settings.getUint8(XGLSettings.ClearColorAlpha);
+            }
+        }
     }
     /**传递给Clear函数来清空当前颜色缓冲 */
     readonly COLOR_BUFFER_BIT = 0x00004000;
@@ -49,28 +78,36 @@ export class GLContext {
     private context: CanvasRenderingContext2D;
     /**上下文设置信息 */
     private settings: DataView;
+    /**屏幕像素Buffer */
+    private screenBuffer: ImageData;
+    /**刷新屏幕 */
+    private refreshScreen() {
+        this.context.putImageData(this.screenBuffer, 0, 0);
+        requestAnimationFrame(this.refreshScreen.bind(this));
+    }
 }
-type GLBuffer = {
+type XGLBuffer = {
     data: ArrayBuffer | undefined,
-    layouts: GLBufferAttribLayout | GLBufferAttribLayout[] | undefined,
+    layouts: XGLBufferAttribLayout | XGLBufferAttribLayout[] | undefined,
 }
-type GLBufferAttribLayout = {
+type XGLBufferAttribLayout = {
     size: number,
     type: number,
     stride: number,
     offset: number
     normalized: boolean,
 }
-type GLRenderBuffer = {
-    data: ImageData | undefined,
-}
 /**设置预定义 */
-const enum GLSettings {
+const enum XGLSettings {
     ClearColorRed = 0,
     ClearColorGreen = 1,
     ClearColorBlue = 2,
     ClearColorAlpha = 3,
-    SettingLength = 4,
+    ViewPortX = 4,
+    ViewPortY = 8,
+    ViewPortWidth = 12,
+    ViewPortHeight = 16,
+    SettingLength = 20,
 }
 
 function clampTo01(val: number) {

@@ -1,9 +1,10 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    class GL {
+    /**XGL库绘制上下文 */
+    class XGLRenderingContext {
         constructor(canvas) {
-            this.DEPTH_BUFFER_BIT = 0x00000100;
+            /**传递给Clear函数来清空当前颜色缓冲 */
             this.COLOR_BUFFER_BIT = 0x00004000;
             this.ARRAY_BUFFER = 0x8892;
             this.ELEMENT_ARRAY_BUFFER = 0x8893;
@@ -31,11 +32,53 @@ define(["require", "exports"], function (require, exports) {
                 this.context = context;
             }
             this.canvas = canvas;
+            this.screenBuffer = context.getImageData(0, 0, canvas.width, canvas.height);
             this.drawingBufferWidth = canvas.width;
             this.drawingBufferHeight = canvas.height;
+            let settingBuffer = new ArrayBuffer(20 /* SettingLength */);
+            this.settings = new DataView(settingBuffer);
+            requestAnimationFrame(this.refreshScreen.bind(this));
+        }
+        createBuffer() {
+            return { data: undefined, layouts: undefined };
+        }
+        clearColor(red, green, blue, alpha) {
+            this.settings.setUint8(0 /* ClearColorRed */, Math.round(clampTo01(red) * 255));
+            this.settings.setUint8(1 /* ClearColorGreen */, Math.round(clampTo01(green) * 255));
+            this.settings.setUint8(2 /* ClearColorBlue */, Math.round(clampTo01(blue) * 255));
+            this.settings.setUint8(3 /* ClearColorAlpha */, Math.round(clampTo01(alpha) * 255));
+        }
+        viewport(x, y, width, height) {
+            if (width <= 0) {
+                throw "viewport的宽度须为正数";
+            }
+            if (height <= 0) {
+                throw "viewport的高度须为整数";
+            }
+            this.settings.setFloat32(4 /* ViewPortX */, x);
+            this.settings.setFloat32(8 /* ViewPortY */, y);
+            this.settings.setFloat32(12 /* ViewPortWidth */, width);
+            this.settings.setFloat32(16 /* ViewPortHeight */, height);
+        }
+        clear(mask) {
+            let rgba = new Uint8ClampedArray(this.settings.buffer, 0 /* ClearColorRed */, 4);
+            for (let row = 0; row < this.drawingBufferHeight; row++) {
+                for (let col = 0; col < this.drawingBufferWidth; col++) {
+                    this.screenBuffer.data.set(rgba, (row * this.drawingBufferWidth + col) << 2);
+                    // this.screenBuffer.data[(row * this.drawingBufferWidth + col) << 2] = this.settings.getUint8(XGLSettings.ClearColorRed);
+                    // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 1] = this.settings.getUint8(XGLSettings.ClearColorGreen);
+                    // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 2] = this.settings.getUint8(XGLSettings.ClearColorBlue);
+                    // this.screenBuffer.data[((row * this.drawingBufferWidth + col) << 2) + 3] = this.settings.getUint8(XGLSettings.ClearColorAlpha);
+                }
+            }
+        }
+        /**刷新屏幕 */
+        refreshScreen() {
+            this.context.putImageData(this.screenBuffer, 0, 0);
+            requestAnimationFrame(this.refreshScreen.bind(this));
         }
     }
-    exports.GL = GL;
+    exports.XGLRenderingContext = XGLRenderingContext;
     function clampTo01(val) {
         return Math.max(Math.min(val, 1), 0);
     }
