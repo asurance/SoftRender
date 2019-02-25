@@ -12,8 +12,8 @@ define(["require", "exports"], function (require, exports) {
                     console.log("ERROR");
                 }
             }
-            let col = Math.floor(uv[0] * this.data.width);
-            let row = Math.floor(uv[1] * this.data.height);
+            let col = Math.round(uv[0] * this.data.width);
+            let row = Math.round(uv[1] * this.data.height);
             let res = [];
             for (let i = 0; i < 4; i++) {
                 res.push(this.data.data[(row * this.data.width + col) * 4 + i] / 255);
