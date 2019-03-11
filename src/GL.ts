@@ -2,9 +2,13 @@ import { GLTypeType } from "./GLConstants";
 
 /**XGL库绘制上下文 */
 export class XGLRenderingContext {
+    /**当前canvas */
     readonly canvas: HTMLCanvasElement;
+    /**当前绘制Buffer高 */
     readonly drawingBufferHeight: number;
+    /**当前绘制Buffer宽 */
     readonly drawingBufferWidth: number;
+    /**XGL库绘制上下文 */
     constructor(canvas: HTMLCanvasElement) {
         let context = canvas.getContext('2d');
         if (context == null) {
@@ -31,6 +35,13 @@ export class XGLRenderingContext {
         this.curSABC = 0;
         requestAnimationFrame(this.refreshScreen.bind(this));
     }
+    /**
+     * 设置视口区域
+     * @param x 视口区域x
+     * @param y 视口区域y
+     * @param width 视口区域宽
+     * @param height 视口区域高
+     */
     viewport(x: number, y: number, width: number, height: number) {
         if (width <= 0) {
             throw "viewport的宽度须为正数";
@@ -43,9 +54,23 @@ export class XGLRenderingContext {
         this.settings.setFloat32(XGLSettings.ViewPortWidth, width);
         this.settings.setFloat32(XGLSettings.ViewPortHeight, height);
     }
+    /**
+     * 使纹理生效
+     * @param texture 生效纹理下标
+     */
     activeTexture(texture: number) {
+        if (texture < 0 || texture >= this.activeTextures.length) {
+            throw "生效的纹理下标为非法值"
+        }
         this.curActiveID = texture;
     }
+    /**
+     * 设置背景清空颜色
+     * @param red 红色通道(0-1)
+     * @param green 绿色通道(0-1)
+     * @param blue 蓝色通道(0-1)
+     * @param alpha 透明度通道(0-1)
+     */
     clearColor(red: number, green: number, blue: number, alpha: number) {
         this.settings.setUint8(XGLSettings.ClearColorRed, Math.round(clampTo01(red) * 255));
         this.settings.setUint8(XGLSettings.ClearColorGreen, Math.round(clampTo01(green) * 255));
@@ -56,34 +81,45 @@ export class XGLRenderingContext {
         this.arrayBuffer = buffer;
     }
     bufferData(target: number, srcData: number | ArrayBuffer | ArrayBufferView) {
-        if (typeof srcData == 'number') {
-            if (srcData < 0) {
-                throw Error("srcData为number类型时不能取负值");
-            }
-            else {
-                this.arrayBuffer!.data = new ArrayBuffer(srcData);
-            }
-        }
-        else if (srcData instanceof ArrayBuffer) {
-            this.arrayBuffer!.data = srcData;
+        if (this.arrayBuffer == undefined) {
+            throw "arrayBuffer未绑定前不能设置数据";
         }
         else {
-            this.arrayBuffer!.data = srcData.buffer;
+            if (typeof srcData == 'number') {
+                if (srcData < 0) {
+                    throw "srcData为number类型时不能取负值";
+                }
+                else {
+                    this.arrayBuffer.data = new ArrayBuffer(srcData);
+                }
+            }
+            else if (srcData instanceof ArrayBuffer) {
+                this.arrayBuffer.data = srcData;
+            }
+            else {
+                this.arrayBuffer.data = srcData.buffer;
+            }
         }
     }
+    /**创建Buffer */
     createBuffer(): XGLBuffer {
-        return { data: undefined, layouts: {} };
+        return { data: undefined, layouts: undefined };
     }
+    /**清空Buffer内存 */
     deleteBuffer(buffer: XGLBuffer) {
         buffer.data = undefined;
         for (let key in buffer.layouts) {
             delete buffer.layouts[key];
         }
+        buffer.layouts = undefined;
     }
     createTexture(): XGLTexture {
         return { data: undefined, texture2D: texture2D };
     }
     bindTexture(target: number, texture: XGLTexture) {
+        if (target < 0 || target >= this.activeTextures.length) {
+            throw "绑定的纹理下标为非法值";
+        }
         this.activeTextures[this.curActiveID] = texture;
     }
     texImage2D(target: number, level: number, internalformat: number, format: number, type: number, pixels: HTMLImageElement) {
@@ -116,11 +152,23 @@ export class XGLRenderingContext {
     }
     vertexAttribPointer(key: string, size: number, type: number, normalized: boolean, stride: number, offset: number) {
         if (this.arrayBuffer) {
-            if (this.arrayBuffer.layouts[key]) {
+            if (this.arrayBuffer.layouts == undefined) {
+                this.arrayBuffer.layouts = {
+                    key: {
+                        size: size,
+                        type: type,
+                        stride: stride,
+                        offset: offset,
+                        normalized: normalized
+                    }
+                }
+            }
+            else if (this.arrayBuffer.layouts[key]) {
                 this.arrayBuffer.layouts[key].size = size;
                 this.arrayBuffer.layouts[key].type = type;
                 this.arrayBuffer.layouts[key].stride = stride;
                 this.arrayBuffer.layouts[key].offset = offset;
+                this.arrayBuffer.layouts[key].normalized = normalized;
             }
             else {
                 this.arrayBuffer.layouts[key] = {
@@ -133,7 +181,7 @@ export class XGLRenderingContext {
             }
         }
         else {
-            throw Error("未绑定VAO时不能设置Attrib")
+            throw "未绑定arrayBuffer时不能设置Attrib";
         }
     }
     clear(mask: number) {
@@ -184,7 +232,9 @@ export class XGLRenderingContext {
     private settings: DataView;
     /**屏幕像素Buffer */
     private screenBuffer: ImageData;
+    /**当前arrayBuffer */
     private arrayBuffer: XGLBuffer | undefined;
+    /**当前program */
     private program: XGLProgram | undefined;
     private curABC: XGLVertex[];
     private curSABC: number;
@@ -301,7 +351,7 @@ export class XGLRenderingContext {
                 }
             }
             else {
-                throw Error("varing中存在错误参数");
+                throw "varing中存在错误参数";
             }
         }
         let data = this.program!.fragmentShader!(this.program!.uniform, varying, this.activeTextures);
@@ -313,7 +363,7 @@ export class XGLRenderingContext {
 }
 type XGLBuffer = {
     data: ArrayBuffer | undefined,
-    layouts: { [key: string]: XGLBufferAttribLayout },
+    layouts: { [key: string]: XGLBufferAttribLayout } | undefined
 }
 function getDataFromArrayBuffer(buffer: XGLBuffer, start: number, length: number) {
     let res = new Array<any>(length);
